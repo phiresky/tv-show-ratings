@@ -5,7 +5,7 @@ var fs = require('fs');
 var minEpisodes = 3, minVotes = 30, popularVotes = 2000;
 var baseConfig = {
     inFile: "data/ratings-series.list",
-    outFile: "bin/basedata-popular.buf",
+    outFile: "bin/basedata-popular.buf.js",
     filter: function (series) {
         return series.votes >= popularVotes && series.episodes.length >= minEpisodes;
     },
@@ -98,12 +98,12 @@ function parseDB(config) {
     console.log("wrote " + db.series.length + " series (" + buf.length / 1000 + " kB) to " + config.outFile);
 }
 parseDB(baseConfig);
-baseConfig.outFile = "bin/basedata-unpopular.buf";
+baseConfig.outFile = "bin/basedata-unpopular.buf.js";
 baseConfig.filter = function (series) {
     return series.votes > minVotes && series.votes < popularVotes && series.episodes.length >= minEpisodes;
 };
 parseDB(baseConfig);
-baseConfig.outFile = "bin/additionalData.buf";
+baseConfig.outFile = "bin/additionalData.buf.js";
 var s = baseConfig.show;
 for (var key in s)
     s[key] = !s[key];

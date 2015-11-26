@@ -104,11 +104,11 @@ function showChart(series) {
     qd["t"] = series.map(function (s) { return (s.title + " " + s.year).replace(/ /g, "_"); }).join("~");
     updateQueryString();
 }
-ProtoBuf.loadJsonFile("ratings.json", function (err, gBuilder) {
+ProtoBuf.loadJson(_schema, function (err, gBuilder) {
     if (err)
         throw err;
     var builder = gBuilder.build("imdbproto");
-    getArrayBuffer("basedata-popular.js", function (baseData) {
+    getArrayBuffer("basedata-popular.buf.js", function (baseData) {
         database = builder.DB.decode(baseData);
         new AutoComplete("search", {
             placeholderHTML: "Search for TV series...",
