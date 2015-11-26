@@ -33,6 +33,7 @@ function tooltip(ep:imdbproto.DB.Series.Episode) {
 	return `<em>${episodeString(ep)}</em>`;
 }
 function tryShowInitialChart() {
+	console.log("showing initial chart");
 	const series = qd["t"].replace(/_/g, " ").split("+").map(info => {
 		const inx = info.lastIndexOf(" ");
 		const title = info.substr(0, inx);
@@ -60,7 +61,6 @@ function showChart(series: imdbproto.DB.Series[]) {
 		return b.season;
 	}, 0);
 	seasons[seasons.length - 1].to = allEps.length;
-	console.log(seasons);
 	const plotBands = seasons.map((season,i) =>({
 		from: season.from, to: season.to,
 		label:{text:`Season ${i}`}
@@ -68,6 +68,7 @@ function showChart(series: imdbproto.DB.Series[]) {
 	
 	const plotLines:any[] = [];
 	for(const season of seasons) {
+		if(!season) continue;
 		plotLines.push({value: season.from + 0.5, width:1, color:"black"})
 		plotLines.push({value: season.to + 0.5, width:1, color:"black"})
 	}
@@ -88,7 +89,7 @@ function showChart(series: imdbproto.DB.Series[]) {
 		},
 		series: series.map(s => ({
 			name: s.title,
-			lineWidth: 0,
+			//lineWidth: 0,
 			marker: {
 				enabled: true, radius: 5
 			},
@@ -98,20 +99,32 @@ function showChart(series: imdbproto.DB.Series[]) {
 	qd["t"] = series.map(s => `${s.title} ${s.year}`.replace(/ /g, "_")).join(" ");
 	updateQueryString();
 }
+function seriesToAutocomplete(series: imdbproto.DB.Series, inx: number) {
+	return {optionHTML:`${series.title} (${series.year})`, value:inx};
+}
 declare var _schema: any; // added by makefile
 {
 	const builder:imdbproto.ProtoBufBuilder = ProtoBuf.loadJson(_schema).build("imdbproto") as any;
 	getArrayBuffer("basedata-popular.buf.js", baseData => {
 		database = builder.DB.decode(baseData);
-		new AutoComplete("search", {
+		const comp = new AutoComplete("search", {
 			placeholderHTML: "Search for TV series...",
 			lists: {series: {
-				options:database.series.map((series,inx) => ({optionHTML:`${series.title} (${series.year})`, value:inx})),
+				options:database.series.map(seriesToAutocomplete),
 				//optionHTML: (s:imdbproto.DB.Series) => s.title,
 				//tokenHTML: x => "a"
 			}},
 			onChange: (val:any[]) => showChart(val.map(v => database.series[v[0].value]))
 		});
 		if(qd["t"]) tryShowInitialChart();
+		getArrayBuffer("basedata-unpopular.buf.js", baseData2 => {
+			const db2 = builder.DB.decode(baseData2);
+			for(const series of db2.series) {
+				const inx = database.series.push(series) - 1;
+				comp.addOption("series", seriesToAutocomplete(series, inx));
+			}
+			if(qd["t"] && !renderSuccess) tryShowInitialChart();
+		});
 	});
+	
 }
