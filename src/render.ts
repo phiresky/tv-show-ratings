@@ -103,7 +103,7 @@ function showChart(series: imdbproto.DB.Series[]) {
 	qd["t"] = series.map(s => `${s.title} ${s.year}`.replace(/ /g, "_")).join("~");
 	updateQueryString();
 }
-ProtoBuf.loadJsonFile("src/ratings.json", (err: any, gBuilder: any) => {
+ProtoBuf.loadJsonFile("ratings.json", (err: any, gBuilder: any) => {
 	if(err) throw err;
 	const builder:imdbproto.ProtoBufBuilder = gBuilder.build("imdbproto") as any
 	getArrayBuffer("basedata-popular.buf", baseData => {
