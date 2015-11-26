@@ -11,7 +11,9 @@ bin/basedata-popular.buf: bin/parse.js data/ratings-series.list
 	node bin/parse.js
 
 bin/ratings-series.list: bin/ratings.list
-	bin/preprocess.sh
+	iconv -f ISO-8859-1 -t utf8 bin/ratings.list -o bin/ratings-series.list
+	# only series (title is in "")
+	sed -r -i '/[0-9]\.[0-9]  ".*" \(/!d' bin/ratings-series.list
 
 bin/libs.js:
 	paste -s node_modules/jquery/dist/jquery.min.js \
