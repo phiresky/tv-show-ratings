@@ -6,13 +6,27 @@
 <meta property='og:image' content=''>
 <title>graph tv shows</title>
 <style>
+<?php readfile('lib/autocomplete-0.3.0.min.css') ?>
 </style>
-<link rel="stylesheet" type="text/css" href="libs.css">
 <div class="container">
 	<div id="chartContainer"></div>
 	<div id="search"></div>
 </div>
-<script src="libs.js"></script>
+<script>
+<?php foreach([
+	"node_modules/jquery/dist/jquery.min.js",
+	"lib/highcharts.js",
+	"node_modules/bytebuffer/dist/bytebuffer.min.js",
+	"node_modules/protobufjs/dist/protobuf-light.min.js",
+	"lib/autocomplete-0.3.0.min.js"
+] as $f) {
+	readfile($f);
+	echo("\n");
+}
+?>
+var _schema = <?php readfile('bin/ratings.json'); ?>;
+
+</script>
 <script src="render.js"></script>
 <script>
 	// Use Ghostery / µBlock Origin or Google Analytics opt out

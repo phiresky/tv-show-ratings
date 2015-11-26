@@ -6,7 +6,7 @@ const fs = require('fs');
 const minEpisodes = 3, minVotes = 30, popularVotes = 2000;
 const baseConfig = {
 	inFile: "data/ratings-series.list",
-	outFile: "bin/basedata-popular.buf",
+	outFile: "bin/basedata-popular.buf.js",
 	filter: (series:imdbproto.DB.Series) => 
 		series.votes >= popularVotes && series.episodes.length >= minEpisodes,
 	show: {
@@ -90,12 +90,12 @@ function parseDB(config: typeof baseConfig) {
 
 parseDB(baseConfig);
 
-baseConfig.outFile = "bin/basedata-unpopular.buf";
+baseConfig.outFile = "bin/basedata-unpopular.buf.js";
 baseConfig.filter = series => 
 		series.votes > minVotes && series.votes < popularVotes && series.episodes.length >= minEpisodes;
 parseDB(baseConfig);
 
-baseConfig.outFile = "bin/additionalData.buf";
+baseConfig.outFile = "bin/additionalData.buf.js";
 const s = baseConfig.show as any;
 for(const key in s) s[key] = !s[key];
 baseConfig.filter = series => 
