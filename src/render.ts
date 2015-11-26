@@ -33,7 +33,7 @@ function tooltip(ep:imdbproto.DB.Series.Episode) {
 	return `<em>${episodeString(ep)}</em>`;
 }
 function tryShowInitialChart() {
-	const series = qd["t"].replace(/_/g, " ").split("~").map(info => {
+	const series = qd["t"].replace(/_/g, " ").split("+").map(info => {
 		const inx = info.lastIndexOf(" ");
 		const title = info.substr(0, inx);
 		const year = +info.substr(inx + 1);
@@ -53,25 +53,23 @@ function showChart(series: imdbproto.DB.Series[]) {
 	const seasons:{from:number, to: number}[] = [{from:0, to:0}];
 	allEps.reduce((a, b, inx) => {
 		if(a !== b.season) {
-			seasons[a].to = inx - 1;
+			seasons[a].to = inx;
 			if(!seasons[b.season]) seasons[b.season] = {from:0,to:0};
 			seasons[b.season].from = inx;
 		}
 		return b.season;
 	}, 0);
-	const plotBands = allEps.reduce((things, episode, inx) => {
-		if(!things[0] || things[0].season != episode.season)
-			things.unshift({season:episode.season,
-				from: inx, to: inx,
-				label:{text:`Season ${episode.season}`}});
-		else things[0].to = inx;
-		return things;
-	}, [] as any[]);
+	seasons[seasons.length - 1].to = allEps.length;
+	console.log(seasons);
+	const plotBands = seasons.map((season,i) =>({
+		from: season.from, to: season.to,
+		label:{text:`Season ${i}`}
+	}));
 	
 	const plotLines:any[] = [];
-	for(const band of plotBands) {
-		plotLines.push({value: band.from-0.5, width:1, color:"black"})
-		plotLines.push({value: band.to + 0.5, width:1, color:"black"})
+	for(const season of seasons) {
+		plotLines.push({value: season.from + 0.5, width:1, color:"black"})
+		plotLines.push({value: season.to + 0.5, width:1, color:"black"})
 	}
 	$("#chartContainer").highcharts({
 		title: { text: title },
@@ -85,11 +83,8 @@ function showChart(series: imdbproto.DB.Series[]) {
 			title: {text: "Rating"},
 				
 		},
-		legend: {
-			
-		},
 		tooltip: {
-			formatter: function() {return tooltip(this.point.episode)}
+			formatter: function() {return `${this.series.name} <em>${episodeString(this.point.episode)}</em>`}
 		},
 		series: series.map(s => ({
 			name: s.title,
@@ -100,13 +95,13 @@ function showChart(series: imdbproto.DB.Series[]) {
 			data: s.episodes.map((episode,i) => ({name:episodeString(episode), x:episode.episode + seasons[episode.season].from, y:episode.rating/10, episode}))
 		}))
 	});
-	qd["t"] = series.map(s => `${s.title} ${s.year}`.replace(/ /g, "_")).join("~");
+	qd["t"] = series.map(s => `${s.title} ${s.year}`.replace(/ /g, "_")).join(" ");
 	updateQueryString();
 }
-ProtoBuf.loadJsonFile("ratings.json", (err: any, gBuilder: any) => {
-	if(err) throw err;
-	const builder:imdbproto.ProtoBufBuilder = gBuilder.build("imdbproto") as any
-	getArrayBuffer("basedata-popular.buf", baseData => {
+declare var _schema: any; // added by makefile
+{
+	const builder:imdbproto.ProtoBufBuilder = ProtoBuf.loadJson(_schema).build("imdbproto") as any;
+	getArrayBuffer("basedata-popular.buf.js", baseData => {
 		database = builder.DB.decode(baseData);
 		new AutoComplete("search", {
 			placeholderHTML: "Search for TV series...",
@@ -119,4 +114,4 @@ ProtoBuf.loadJsonFile("ratings.json", (err: any, gBuilder: any) => {
 		});
 		if(qd["t"]) tryShowInitialChart();
 	});
-});
+}
