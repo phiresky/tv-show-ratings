@@ -108,7 +108,7 @@ ProtoBuf.loadJsonFile("ratings.json", function (err, gBuilder) {
     if (err)
         throw err;
     var builder = gBuilder.build("imdbproto");
-    getArrayBuffer("basedata-popular.buf", function (baseData) {
+    getArrayBuffer("basedata-popular.js", function (baseData) {
         database = builder.DB.decode(baseData);
         new AutoComplete("search", {
             placeholderHTML: "Search for TV series...",
