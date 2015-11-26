@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"outDir": "bin",
+		"watch": false,
+		"sourceMap": true,
+		"noImplicitAny": true
+	},
+	"files": [
+		"./lib/typings/tsd.d.ts",
+		"./lib/ratings.d.ts",
+		"./src/parse.ts",
+		"./src/render.ts"
+	]
+}

@@ -1,0 +1,23 @@
+package imdbproto;
+
+message DB {
+	message Series {
+		optional string title = 1;
+		optional int32 year = 2;
+		optional int32 rating = 3;
+		optional int32 votes = 4;
+		repeated Episode episodes = 5;
+		optional int64 distribution = 6;
+
+		message Episode {
+			optional int32 rating = 1;
+			optional int32 season = 2;
+			optional int32 episode = 3;
+			optional string title = 4;
+			optional int32 votes = 5;
+			optional int64 distribution = 6;
+		}
+	}
+
+	repeated Series series = 1;
+}
