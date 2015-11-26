@@ -34,7 +34,8 @@ function tooltip(ep) {
     return "<em>" + episodeString(ep) + "</em>";
 }
 function tryShowInitialChart() {
-    var series = qd["t"].replace(/_/g, " ").split("~").map(function (info) {
+    console.log("showing initial chart");
+    var series = qd["t"].replace(/_/g, " ").split("+").map(function (info) {
         var inx = info.lastIndexOf(" ");
         var title = info.substr(0, inx);
         var year = +info.substr(inx + 1);
@@ -55,27 +56,25 @@ function showChart(series) {
     var seasons = [{ from: 0, to: 0 }];
     allEps.reduce(function (a, b, inx) {
         if (a !== b.season) {
-            seasons[a].to = inx - 1;
+            seasons[a].to = inx;
             if (!seasons[b.season])
                 seasons[b.season] = { from: 0, to: 0 };
             seasons[b.season].from = inx;
         }
         return b.season;
     }, 0);
-    var plotBands = allEps.reduce(function (things, episode, inx) {
-        if (!things[0] || things[0].season != episode.season)
-            things.unshift({ season: episode.season,
-                from: inx, to: inx,
-                label: { text: "Season " + episode.season } });
-        else
-            things[0].to = inx;
-        return things;
-    }, []);
+    seasons[seasons.length - 1].to = allEps.length;
+    var plotBands = seasons.map(function (season, i) { return ({
+        from: season.from, to: season.to,
+        label: { text: "Season " + i }
+    }); });
     var plotLines = [];
-    for (var _i = 0, plotBands_1 = plotBands; _i < plotBands_1.length; _i++) {
-        var band = plotBands_1[_i];
-        plotLines.push({ value: band.from - 0.5, width: 1, color: "black" });
-        plotLines.push({ value: band.to + 0.5, width: 1, color: "black" });
+    for (var _i = 0, seasons_1 = seasons; _i < seasons_1.length; _i++) {
+        var season = seasons_1[_i];
+        if (!season)
+            continue;
+        plotLines.push({ value: season.from + 0.5, width: 1, color: "black" });
+        plotLines.push({ value: season.to + 0.5, width: 1, color: "black" });
     }
     $("#chartContainer").highcharts({
         title: { text: title },
@@ -88,37 +87,47 @@ function showChart(series) {
         yAxis: {
             title: { text: "Rating" },
         },
-        legend: {},
         tooltip: {
-            formatter: function () { return tooltip(this.point.episode); }
+            formatter: function () { return this.series.name + " <em>" + episodeString(this.point.episode) + "</em>"; }
         },
         series: series.map(function (s) { return ({
             name: s.title,
-            lineWidth: 0,
+            //lineWidth: 0,
             marker: {
                 enabled: true, radius: 5
             },
             data: s.episodes.map(function (episode, i) { return ({ name: episodeString(episode), x: episode.episode + seasons[episode.season].from, y: episode.rating / 10, episode: episode }); })
         }); })
     });
-    qd["t"] = series.map(function (s) { return (s.title + " " + s.year).replace(/ /g, "_"); }).join("~");
+    qd["t"] = series.map(function (s) { return (s.title + " " + s.year).replace(/ /g, "_"); }).join(" ");
     updateQueryString();
 }
-ProtoBuf.loadJson(_schema, function (err, gBuilder) {
-    if (err)
-        throw err;
-    var builder = gBuilder.build("imdbproto");
+function seriesToAutocomplete(series, inx) {
+    return { optionHTML: series.title + " (" + series.year + ")", value: inx };
+}
+{
+    var builder_1 = ProtoBuf.loadJson(_schema).build("imdbproto");
     getArrayBuffer("basedata-popular.buf.js", function (baseData) {
-        database = builder.DB.decode(baseData);
-        new AutoComplete("search", {
+        database = builder_1.DB.decode(baseData);
+        var comp = new AutoComplete("search", {
             placeholderHTML: "Search for TV series...",
             lists: { series: {
-                    options: database.series.map(function (series, inx) { return ({ optionHTML: series.title + " (" + series.year + ")", value: inx }); }),
+                    options: database.series.map(seriesToAutocomplete),
                 } },
             onChange: function (val) { return showChart(val.map(function (v) { return database.series[v[0].value]; })); }
         });
         if (qd["t"])
             tryShowInitialChart();
+        getArrayBuffer("basedata-unpopular.buf.js", function (baseData2) {
+            var db2 = builder_1.DB.decode(baseData2);
+            for (var _i = 0, _a = db2.series; _i < _a.length; _i++) {
+                var series = _a[_i];
+                var inx = database.series.push(series) - 1;
+                comp.addOption("series", seriesToAutocomplete(series, inx));
+            }
+            if (qd["t"] && !renderSuccess)
+                tryShowInitialChart();
+        });
     });
-});
+}
 //# sourceMappingURL=render.js.map
