@@ -125,11 +125,15 @@ function showChart(series: IndexedSeries[]) {
 		from: seasonXOffset[i]+season.min, to: seasonXOffset[i] + season.max,
 		label:{text:`Season ${i}`}
 	}));
-	
-	const plotLines = maxSeasons.filter(s => s.min !== s.max).map((season,i) =>({
-		value: seasonXOffset[i] + season.min - 0.5, width:1, color:"black",
-		//label:{text:`Season ${i}`}
-	}));
+	const plotLines = [] as any[];
+	for(let i = 0; i < maxSeasons.length; i++) {
+		const season = maxSeasons[i];
+		if(season.min === season.max) continue;
+		plotLines.push({
+			value: seasonXOffset[i] + season.min - 0.5, width:1, color:"black",
+			//label:{text:`Season ${i}`}
+		});
+	}
 	
 	const chartSeries = series.map(([i,s], si) => ({
 		name: s.title,
