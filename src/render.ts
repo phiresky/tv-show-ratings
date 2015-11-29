@@ -46,6 +46,8 @@ type Episode = imdbproto.DB.Series.Episode;
 type Series = imdbproto.DB.Series;
 type IndexedSeries = [number, Series];
 
+const colors = ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9', 
+   '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1'];
 let renderSuccess = false;
 let database: imdbproto.DB;
 let currentDisplay: IndexedSeries[] = [];
@@ -141,6 +143,7 @@ function showChart(series: IndexedSeries[]) {
 		marker: {
 			enabled: true, radius: 5
 		},
+		color: colors[si],
 		data: s.episodes.map((episode) => {
 			return {
 				name:episodeString(episode),
@@ -154,7 +157,9 @@ function showChart(series: IndexedSeries[]) {
 		chartSeries.push({
 			name: chartSeries[i].name+" – Trendline",
 			marker: {enabled:false},
-			data: linearRegression(chartSeries[i].data)
+			dashStyle:'shortdot',
+			data: linearRegression(chartSeries[i].data),
+			color: chartSeries[i].color,
 		} as any);
 	}
 	if(qd["seasonTrend"] !== undefined) {
@@ -176,7 +181,9 @@ function showChart(series: IndexedSeries[]) {
 			chartSeries.push({
 				name: chartSeries[s].name+" – Trendline",
 				marker: {enabled:false},
-				data: regData
+				dashStyle:'shortdot',
+				data: regData,
+				color: chartSeries[s].color
 			} as any);
 		}
 	}
