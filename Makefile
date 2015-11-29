@@ -26,7 +26,7 @@ bin/ratings.json: src/ratings.proto
 
 lib/ratings.d.ts: bin/ratings.json
 	mkdir -p bin
-	node node_modules/proto2typescript/bin/proto2typescript-bin.js -f bin/ratings.json > lib/ratings.d.ts
+	node node_modules/proto2typescript/bin/proto2typescript-bin.js -f bin/ratings.json -c false > lib/ratings.d.ts
 
 bin/index.html: src/index.html
 	mkdir -p bin

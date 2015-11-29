@@ -8,13 +8,21 @@ function getArrayBuffer(filename: string, callback: (data: ArrayBuffer) => void)
 
 	oReq.send();
 }
-const qd: { [key: string]: string } = {};
+const qd: { [key: string]: (string) } = {
+	noCutoff: undefined,
+	d: undefined, // display chart type, undefined=line, bar=column
+	align: undefined // alignment: undefined=normalize within season, season=align at season start
+};
 location.search.substr(1).split("&").forEach(item => {
     const [k, v] = item.split("=");
-    if(k) qd[k] = v && decodeURIComponent(v);
+    if(k) qd[k] = v ? decodeURIComponent(v) : "";
 });
 function updateQueryString() {
-	history.replaceState({}, "", "?"+$.param(qd));
+	const enc = encodeURI; // not encodeURICompontent for +
+	history.replaceState({}, "", "?"+Object.keys(qd)
+	.filter(k => qd[k] !== undefined)
+	.map(k => qd[k].length == 0 ? enc(k) : enc(k) +"="+enc(""+qd[k]))
+	.join("&"));
 }
 declare var dcodeIO:any, $:any, AutoComplete:any;
 (<any>window).ProtoBuf = dcodeIO.ProtoBuf;
@@ -52,60 +60,102 @@ function tryShowInitialChart() {
 		//showChart(series);
 	}
 }
-function seriesToSeasons(ep:Episode) {
-	
+type Bounds = {min:number, max:number};
+function seriesToSeasons(series:Series) {
+	const seasons:Bounds[] = [];
+	for(const ep of series.episodes) {
+		if(ep.season === null || ep.episode === null) {
+			throw "NO"+JSON.stringify(series);
+		}
+		const season = seasons[ep.season] || (seasons[ep.season] = {min:Infinity, max:-Infinity});
+		if(ep.episode < season.min) season.min = ep.episode;
+		if(ep.episode + 1 > season.max) season.max = ep.episode + 1;
+	}
+	return seasons;
 }
+
+function alignEpisodeX({episode, season}:Episode, seasonXOffset: number[], seasonsInfo:Bounds[], seasonMaxInfo:Bounds[]) {
+	const s = seasonsInfo[season];
+	const maxs = seasonMaxInfo[season];
+	const t = qd["align"];
+	if(t === undefined) {
+		return seasonXOffset[season] + (episode-s.min) / (s.max-s.min) * (maxs.max - maxs.min) + maxs.min
+	} else if(t === "season") {
+		return seasonXOffset[season] + episode;
+	} else if(t === "episode") {
+		return seasonsInfo.slice(season).reduce((sum, x) => sum + x.max - x.min, 0) + episode;
+	} else if(t === "global") {
+		
+	}
+}
+
 function showChart(series: IndexedSeries[]) {
 	currentDisplay = series;
 	if(series.length === 0) return;
 	const title = series.map(s => s[1].title).join(", ");
-	let allEps:imdbproto.DB.Series.Episode[] = [].concat.apply([], series.map(s => s[1].episodes));
-	allEps.sort((a,b) => a.season - b.season || a.episode - b.episode);
-	allEps = allEps.filter((ep, i) => i == 0 || ep.season != allEps[i-1].season || ep.episode != allEps[i-1].episode);
-	const seasons:{from:number, to: number}[] = [{from:0, to:0}];
-	allEps.reduce((a, b, inx) => {
-		if(a !== b.season) {
-			seasons[a].to = inx;
-			if(!seasons[b.season]) seasons[b.season] = {from:0,to:0};
-			seasons[b.season].from = inx;
-		}
-		return b.season;
-	}, 0);
-	seasons[seasons.length - 1].to = allEps.length;
-	const plotBands = seasons.map((season,i) =>({
-		from: season.from, to: season.to,
+	const seasons = series.map(s => seriesToSeasons(s[1]));
+	// max bounds for each season
+	const maxSeasons:Bounds[] = [];
+	for(let i = 0; i < Math.max(...seasons.map(s => s.length)); i++) {
+		const data = seasons.map(s => s[i]).filter(s => s !== undefined);
+		if(data.length === 0) maxSeasons[i] = {min:0, max:0};
+		else maxSeasons[i] = {min:Math.min(...data.map(i => i.min)), max:Math.max(...data.map(i => i.max))};
+	}
+	const seasonXOffset:number[] = [0];
+	for(let i = 1; i < maxSeasons.length; i++) {
+		seasonXOffset[i] = seasonXOffset[i-1] + (maxSeasons[i-1].max - maxSeasons[i-1].min);
+	}
+	console.log(seasonXOffset);
+	console.log(seasons, maxSeasons);
+	const plotBands = maxSeasons.map((season,i) =>({
+		from: seasonXOffset[i]+season.min, to: seasonXOffset[i] + season.max,
 		label:{text:`Season ${i}`}
 	}));
 	
-	const plotLines:any[] = [];
-	for(const season of seasons) {
-		if(!season) continue;
-		plotLines.push({value: season.from + 0.5, width:1, color:"black"})
-		plotLines.push({value: season.to + 0.5, width:1, color:"black"})
-	}
-	const chartSeries = series.map(([i,s]) => ({
+	const plotLines = maxSeasons.map((season,i) =>({
+		value: seasonXOffset[i] + season.min - 0.5, width:1, color:"black",
+		//label:{text:`Season ${i}`}
+	}));
+	
+	const chartSeries = series.map(([i,s], si) => ({
 		name: s.title,
+		type: ({"undefined":"line", "bar":"column"} as any)[""+qd["d"]],
 		//lineWidth: 0,
 		marker: {
 			enabled: true, radius: 5
 		},
-		data: s.episodes.map((episode,i) => ({name:episodeString(episode), x:episode.episode + seasons[episode.season].from, y:episode.rating/10, episode}))
+		data: s.episodes.map((episode) => {
+			return {
+				name:episodeString(episode),
+				x: alignEpisodeX(episode, seasonXOffset, seasons[si], maxSeasons),
+				y: episode.rating/10,
+				episode
+			}
+		})
 	}));
 	const xAxis = {
 		//categories: series.episodes.map(tooltip),
 		plotBands,
 		plotLines,
-		type: 'category'
+		labels: {enabled:false},
+		tickLength: 0,
+		minorTickLength: 0
 	};
 	if(!chart) {
 		chart = $("#chartContainer").highcharts({
 			title: { text: title },
+			chart: {
+				zoomType: 'x'
+			},
 			xAxis,
 			yAxis: {
+				max: 10,
+				min: qd["noCutoff"] !== undefined ? 0:undefined,
 				title: {text: "Rating"},
+				tickInterval: 1,
 			},
 			tooltip: {
-				formatter: function() {return `${this.series.name} <em>${episodeString(this.point.episode)}</em> : ${this.point.y.toFixed(1)}`}
+				formatter: function() {return `${this.series.name} <em>${episodeString(this.point.episode)}</em> : ${this.point.y.toFixed(1)} // ${this.point.x}`}
 			},
 			series: chartSeries,
 			credits: { enabled:false }
@@ -120,7 +170,7 @@ function showChart(series: IndexedSeries[]) {
 		chartSeries.forEach(c => chart.addSeries(c, false));
 		chart.redraw();
 	}
-	qd["t"] = series.map(([i,s]) => `${s.title} ${s.year}`.replace(/ /g, "_")).join(" ");
+	qd["t"] = series.map(([i,s]) => `${s.title} ${s.year}`.replace(/ /g, "_")).join("+");
 	updateQueryString();
 }
 function seriesToAutocomplete(series: Series, inx: number) {
