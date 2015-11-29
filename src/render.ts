@@ -24,6 +24,7 @@ let renderSuccess = false;
 let database: imdbproto.DB;
 let currentDisplay: IndexedSeries[] = [];
 let autoComplete: any;
+let chart: any;
 function getSeries(title: string, year: number):[number, imdbproto.DB.Series] {
 	let i = 0;
 	for(const series of database.series) {
@@ -34,9 +35,6 @@ function getSeries(title: string, year: number):[number, imdbproto.DB.Series] {
 function episodeString(ep:imdbproto.DB.Series.Episode) {
 	const s = ep.season, e = ep.episode;
 	return `S${s<10?'0'+s:s} E${e<10?'0'+e:e}`
-}
-function tooltip(ep:imdbproto.DB.Series.Episode) {
-	return `<em>${episodeString(ep)}</em>`;
 }
 function tryShowInitialChart() {
 	console.log("showing initial chart");
@@ -49,7 +47,7 @@ function tryShowInitialChart() {
 	if(series.every(s => s !== undefined)) {
 		renderSuccess = true;
 		autoComplete.setValue(series.map(([i,s]) => [seriesToAutocomplete(s,i)]));
-		showChart(series);
+		//showChart(series);
 	}
 }
 function showChart(series: IndexedSeries[]) {
@@ -80,30 +78,43 @@ function showChart(series: IndexedSeries[]) {
 		plotLines.push({value: season.from + 0.5, width:1, color:"black"})
 		plotLines.push({value: season.to + 0.5, width:1, color:"black"})
 	}
-	$("#chartContainer").highcharts({
-		title: { text: title },
-		xAxis: {
-			//categories: series.episodes.map(tooltip),
-			plotBands,
-			plotLines,
-			type: 'category'
+	const chartSeries = series.map(([i,s]) => ({
+		name: s.title,
+		//lineWidth: 0,
+		marker: {
+			enabled: true, radius: 5
 		},
-		yAxis: {
-			title: {text: "Rating"},
-				
-		},
-		tooltip: {
-			formatter: function() {return `${this.series.name} <em>${episodeString(this.point.episode)}</em>`}
-		},
-		series: series.map(([i,s]) => ({
-			name: s.title,
-			//lineWidth: 0,
-			marker: {
-				enabled: true, radius: 5
+		data: s.episodes.map((episode,i) => ({name:episodeString(episode), x:episode.episode + seasons[episode.season].from, y:episode.rating/10, episode}))
+	}));
+	const xAxis = {
+		//categories: series.episodes.map(tooltip),
+		plotBands,
+		plotLines,
+		type: 'category'
+	};
+	if(!chart) {
+		chart = $("#chartContainer").highcharts({
+			title: { text: title },
+			xAxis,
+			yAxis: {
+				title: {text: "Rating"},
 			},
-			data: s.episodes.map((episode,i) => ({name:episodeString(episode), x:episode.episode + seasons[episode.season].from, y:episode.rating/10, episode}))
-		}))
-	});
+			tooltip: {
+				formatter: function() {return `${this.series.name} <em>${episodeString(this.point.episode)}</em> : ${this.point.y.toFixed(1)}`}
+			},
+			series: chartSeries,
+			credits: { enabled:false }
+		}).highcharts();
+	} else {
+		chart.setTitle({text:title});
+		while(chart.series.length > 0) chart.series[0].remove(false);
+		chart.xAxis[0].remove(false);
+		chart.addAxis(xAxis, true, false);
+		chart.colorCounter = 0;
+		chart.symbolCounter = 0;
+		chartSeries.forEach(c => chart.addSeries(c, false));
+		chart.redraw();
+	}
 	qd["t"] = series.map(([i,s]) => `${s.title} ${s.year}`.replace(/ /g, "_")).join(" ");
 	updateQueryString();
 }
