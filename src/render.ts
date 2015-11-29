@@ -18,21 +18,23 @@ function updateQueryString() {
 }
 declare var dcodeIO:any, $:any, AutoComplete:any;
 (<any>window).ProtoBuf = dcodeIO.ProtoBuf;
-type IndexedSeries = [number, imdbproto.DB.Series];
+type Episode = imdbproto.DB.Series.Episode;
+type Series = imdbproto.DB.Series;
+type IndexedSeries = [number, Series];
 
 let renderSuccess = false;
 let database: imdbproto.DB;
 let currentDisplay: IndexedSeries[] = [];
 let autoComplete: any;
 let chart: any;
-function getSeries(title: string, year: number):[number, imdbproto.DB.Series] {
+function getSeries(title: string, year: number):[number, Series] {
 	let i = 0;
 	for(const series of database.series) {
 		if(series.title === title && series.year === year) return [i,series];
 		i++;
 	}
 }
-function episodeString(ep:imdbproto.DB.Series.Episode) {
+function episodeString(ep:Episode) {
 	const s = ep.season, e = ep.episode;
 	return `S${s<10?'0'+s:s} E${e<10?'0'+e:e}`
 }
@@ -49,6 +51,9 @@ function tryShowInitialChart() {
 		autoComplete.setValue(series.map(([i,s]) => [seriesToAutocomplete(s,i)]));
 		//showChart(series);
 	}
+}
+function seriesToSeasons(ep:Episode) {
+	
 }
 function showChart(series: IndexedSeries[]) {
 	currentDisplay = series;
@@ -118,7 +123,7 @@ function showChart(series: IndexedSeries[]) {
 	qd["t"] = series.map(([i,s]) => `${s.title} ${s.year}`.replace(/ /g, "_")).join(" ");
 	updateQueryString();
 }
-function seriesToAutocomplete(series: imdbproto.DB.Series, inx: number) {
+function seriesToAutocomplete(series: Series, inx: number) {
 	const txt = `${series.title} (${series.year})`;
 	return {optionHTML:txt, tokenHTML:txt, value:inx};
 }
@@ -132,7 +137,7 @@ declare var _schema: any; // added by makefile
 			
 			lists: {series: {
 				options:database.series.map(seriesToAutocomplete),
-				//optionHTML: (s:imdbproto.DB.Series) => s.title,
+				//optionHTML: (s:Series) => s.title,
 				//tokenHTML: x => "a"
 				matchOptions: (inp:string, res:any[]) => res.slice(0, 20).filter(v => !currentDisplay.some(([i,s])=>i===v.value)),
 			}},
