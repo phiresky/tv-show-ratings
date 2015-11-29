@@ -109,10 +109,12 @@ declare var _schema: any; // added by makefile
 		database = builder.DB.decode(baseData);
 		const comp = new AutoComplete("search", {
 			placeholderHTML: "Search for TV series...",
+			
 			lists: {series: {
 				options:database.series.map(seriesToAutocomplete),
 				//optionHTML: (s:imdbproto.DB.Series) => s.title,
 				//tokenHTML: x => "a"
+				matchOptions: (inp:string, res:any[]) => res.slice(0, 20),
 			}},
 			onChange: (val:any[]) => showChart(val.map(v => database.series[v[0].value]))
 		});

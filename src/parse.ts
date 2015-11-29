@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+//#!/usr/bin/env node
 
 const ProtoBuf = require("protobufjs");
 const builder:imdbproto.ProtoBufBuilder = ProtoBuf.loadJsonFile("bin/ratings.json").build("imdbproto") as any;
