@@ -121,14 +121,12 @@ function showChart(series: IndexedSeries[]) {
 	for(let i = 1; i < maxSeasons.length; i++) {
 		seasonXOffset[i] = seasonXOffset[i-1] + (maxSeasons[i-1].max - maxSeasons[i-1].min);
 	}
-	console.log(seasonXOffset);
-	console.log(seasons, maxSeasons);
 	const plotBands = maxSeasons.map((season,i) =>({
 		from: seasonXOffset[i]+season.min, to: seasonXOffset[i] + season.max,
 		label:{text:`Season ${i}`}
 	}));
 	
-	const plotLines = maxSeasons.map((season,i) =>({
+	const plotLines = maxSeasons.filter(s => s.min !== s.max).map((season,i) =>({
 		value: seasonXOffset[i] + season.min - 0.5, width:1, color:"black",
 		//label:{text:`Season ${i}`}
 	}));
@@ -163,8 +161,9 @@ function showChart(series: IndexedSeries[]) {
 			for(let i = 0; i < data.length; i++) {
 				const curSeason = data[i].episode.season;
 				if(curSeason != season) {
-					regData.push(...linearRegression(data.slice(begin, i)))
-					regData.push(null);
+					regData.push(...linearRegression(data.slice(begin, i)));
+					// add gaps
+					regData.push({x:regData[regData.length-1].x+0.1, y:null});
 					season = curSeason;
 					begin = i;
 				}
