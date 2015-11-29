@@ -43,6 +43,8 @@ function linearRegression(ps) {
     return [{ x: x0, y: slope * x0 + intercept }, { x: x1, y: slope * x1 + intercept }];
 }
 window.ProtoBuf = dcodeIO.ProtoBuf;
+var colors = ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9',
+    '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1'];
 var renderSuccess = false;
 var database;
 var currentDisplay = [];
@@ -152,6 +154,7 @@ function showChart(series) {
             marker: {
                 enabled: true, radius: 5
             },
+            color: colors[si],
             data: s.episodes.map(function (episode) {
                 return {
                     name: episodeString(episode),
@@ -167,7 +170,9 @@ function showChart(series) {
             chartSeries.push({
                 name: chartSeries[i].name + " – Trendline",
                 marker: { enabled: false },
-                data: linearRegression(chartSeries[i].data)
+                dashStyle: 'shortdot',
+                data: linearRegression(chartSeries[i].data),
+                color: chartSeries[i].color,
             });
         }
     if (qd["seasonTrend"] !== undefined) {
@@ -189,7 +194,9 @@ function showChart(series) {
             chartSeries.push({
                 name: chartSeries[s_1].name + " – Trendline",
                 marker: { enabled: false },
-                data: regData
+                dashStyle: 'shortdot',
+                data: regData,
+                color: chartSeries[s_1].color
             });
         }
     }
