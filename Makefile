@@ -31,3 +31,8 @@ lib/ratings.d.ts: bin/ratings.json
 bin/index.html: src/index.html
 	mkdir -p bin
 	php src/index.html > bin/index.html
+
+gh-pages: bin/.git # bin must be checked out to gh-pages branch
+	cd bin; git add -A; git commit -m'update binaries'; git push
+	
+.PHONY: gh-pages
