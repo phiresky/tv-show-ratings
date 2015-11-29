@@ -131,15 +131,19 @@ function showChart(series) {
     for (var i = 1; i < maxSeasons.length; i++) {
         seasonXOffset[i] = seasonXOffset[i - 1] + (maxSeasons[i - 1].max - maxSeasons[i - 1].min);
     }
-    console.log(seasonXOffset);
-    console.log(seasons, maxSeasons);
     var plotBands = maxSeasons.map(function (season, i) { return ({
         from: seasonXOffset[i] + season.min, to: seasonXOffset[i] + season.max,
         label: { text: "Season " + i }
     }); });
-    var plotLines = maxSeasons.map(function (season, i) { return ({
-        value: seasonXOffset[i] + season.min - 0.5, width: 1, color: "black",
-    }); });
+    var plotLines = [];
+    for (var i = 0; i < maxSeasons.length; i++) {
+        var season = maxSeasons[i];
+        if (season.min === season.max)
+            continue;
+        plotLines.push({
+            value: seasonXOffset[i] + season.min - 0.5, width: 1, color: "black",
+        });
+    }
     var chartSeries = series.map(function (_a, si) {
         var i = _a[0], s = _a[1];
         return ({
@@ -175,7 +179,8 @@ function showChart(series) {
                 var curSeason = data[i].episode.season;
                 if (curSeason != season) {
                     regData.push.apply(regData, linearRegression(data.slice(begin, i)));
-                    regData.push(null);
+                    // add gaps
+                    regData.push({ x: regData[regData.length - 1].x + 0.1, y: null });
                     season = curSeason;
                     begin = i;
                 }
