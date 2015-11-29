@@ -10,7 +10,7 @@ function getArrayBuffer(filename: string, callback: (data: ArrayBuffer) => void)
 }
 const qd: { [key: string]: (string) } = {
 	noCutoff: undefined,
-	d: undefined, // display chart type, undefined=line, bar=column
+	d: undefined, // display chart type, undefined=line, bar=column, scatter
 	align: undefined // alignment: undefined=normalize within season, season=align at season start
 };
 location.search.substr(1).split("&").forEach(item => {
@@ -23,6 +23,22 @@ function updateQueryString() {
 	.filter(k => qd[k] !== undefined)
 	.map(k => qd[k].length == 0 ? enc(k) : enc(k) +"="+enc(""+qd[k]))
 	.join("&"));
+};
+function linearRegression(ps:{x:number, y:number}[]){
+	let sum_x = 0, sum_y = 0, sum_xy = 0, sum_xx = 0, sum_yy = 0;
+	
+	for (const p of ps) {
+		sum_x += p.x; sum_y += p.y;
+		sum_xy += p.x*p.y;
+		sum_xx += p.x*p.x; sum_yy += p.y*p.y;
+	}
+	const n = ps.length;
+	
+	const slope = (n * sum_xy - sum_x * sum_y) / (n*sum_xx - sum_x * sum_x);
+	const intercept = (sum_y - slope * sum_x)/n;
+	//lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
+	const x0 = ps[0].x, x1 = ps[ps.length - 1].x;
+	return [{x:x0, y:slope*x0 + intercept}, {x:x1, y:slope*x1 + intercept}];
 }
 declare var dcodeIO:any, $:any, AutoComplete:any;
 (<any>window).ProtoBuf = dcodeIO.ProtoBuf;
@@ -119,8 +135,7 @@ function showChart(series: IndexedSeries[]) {
 	
 	const chartSeries = series.map(([i,s], si) => ({
 		name: s.title,
-		type: ({"undefined":"line", "bar":"column"} as any)[""+qd["d"]],
-		//lineWidth: 0,
+		type: ({"undefined":"line", "bar":"column", "scatter":"scatter"} as any)[""+qd["d"]],
 		marker: {
 			enabled: true, radius: 5
 		},
@@ -133,6 +148,35 @@ function showChart(series: IndexedSeries[]) {
 			}
 		})
 	}));
+	if(qd["seriesTrend"] !== undefined)	for(let i = 0; i < series.length; i++) {
+		chartSeries.push({
+			name: chartSeries[i].name+" – Trendline",
+			marker: {enabled:false},
+			data: linearRegression(chartSeries[i].data)
+		} as any);
+	}
+	if(qd["seasonTrend"] !== undefined) {
+		for(let s = 0; s < series.length; s++) {
+			const regData:{x:number,y:number}[] = [];
+			const data = chartSeries[s].data;
+			let season = data[0].episode.season, begin = 0;
+			for(let i = 0; i < data.length; i++) {
+				const curSeason = data[i].episode.season;
+				if(curSeason != season) {
+					regData.push(...linearRegression(data.slice(begin, i)))
+					regData.push(null);
+					season = curSeason;
+					begin = i;
+				}
+			}
+			regData.push(...linearRegression(data.slice(begin)));
+			chartSeries.push({
+				name: chartSeries[s].name+" – Trendline",
+				marker: {enabled:false},
+				data: regData
+			} as any);
+		}
+	}
 	const xAxis = {
 		//categories: series.episodes.map(tooltip),
 		plotBands,
@@ -155,7 +199,10 @@ function showChart(series: IndexedSeries[]) {
 				tickInterval: 1,
 			},
 			tooltip: {
-				formatter: function() {return `${this.series.name} <em>${episodeString(this.point.episode)}</em> : ${this.point.y.toFixed(1)} // ${this.point.x}`}
+				formatter: function() {
+					if(!this.point.episode) return undefined;
+					return `${this.series.name} <em>${episodeString(this.point.episode)}</em> : ${this.point.y.toFixed(1)}`
+				}
 			},
 			series: chartSeries,
 			credits: { enabled:false }
