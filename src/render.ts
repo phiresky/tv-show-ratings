@@ -139,7 +139,7 @@ function showChart(series: IndexedSeries[]) {
 	
 	const chartSeries = series.map(([i,s], si) => ({
 		name: s.title,
-		type: ({"undefined":"line", "bar":"column", "scatter":"scatter"} as any)[""+qd["d"]],
+		type: ({"undefined":"scatter", "bar":"column", "scatter":"scatter","line":"line"} as any)[""+qd["d"]],
 		marker: {
 			enabled: true, radius: 5
 		},
@@ -162,7 +162,7 @@ function showChart(series: IndexedSeries[]) {
 			color: chartSeries[i].color,
 		} as any);
 	}
-	if(qd["seasonTrend"] !== undefined) {
+	if(qd["noSeasonTrend"] === undefined) {
 		for(let s = 0; s < series.length; s++) {
 			const regData:{x:number,y:number}[] = [];
 			const data = chartSeries[s].data;
