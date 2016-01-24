@@ -150,7 +150,7 @@ function showChart(series) {
         var i = _a[0], s = _a[1];
         return ({
             name: s.title,
-            type: { "undefined": "line", "bar": "column", "scatter": "scatter" }["" + qd["d"]],
+            type: { "undefined": "scatter", "bar": "column", "scatter": "scatter", "line": "line" }["" + qd["d"]],
             marker: {
                 enabled: true, radius: 5
             },
@@ -175,7 +175,7 @@ function showChart(series) {
                 color: chartSeries[i].color,
             });
         }
-    if (qd["seasonTrend"] !== undefined) {
+    if (qd["noSeasonTrend"] === undefined) {
         for (var s_1 = 0; s_1 < series.length; s_1++) {
             var regData = [];
             var data = chartSeries[s_1].data;
