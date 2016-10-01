@@ -119,7 +119,7 @@ function showChart(series) {
     var seasons = series.map(function (s) { return seriesToSeasons(s[1]); });
     // max bounds for each season
     var maxSeasons = [];
-    var _loop_1 = function(i) {
+    var _loop_1 = function (i) {
         var data = seasons.map(function (s) { return s[i]; }).filter(function (s) { return s !== undefined; });
         if (data.length === 0)
             maxSeasons[i] = { min: 0, max: 0 };
