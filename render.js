@@ -77,6 +77,7 @@ function tryShowInitialChart() {
             var i = _a[0], s = _a[1];
             return [seriesToAutocomplete(s, i)];
         }));
+        //showChart(series);
     }
 }
 function seriesToSeasons(series) {
