@@ -12,7 +12,7 @@ bin/basedata-popular.buf.js: bin/parse.js data/ratings-series.list bin/ratings.j
 
 data/ratings.list:
 	mkdir -p data
-	wget ftp://ftp.fu-berlin.de/pub/misc/movies/database/ratings.list.gz -O data/ratings.list.gz
+	wget ftp://ftp.fu-berlin.de/pub/misc/movies/database/temporaryaccess/ratings.list.gz -O data/ratings.list.gz
 	gunzip data/ratings.list.gz
 
 data/ratings-series.list: data/ratings.list
