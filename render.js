@@ -144,7 +144,7 @@ function showChart(series) {
         if (season.min === season.max)
             continue;
         plotLines.push({
-            value: seasonXOffset[i] + season.min - 0.5, width: 1, color: "black",
+            value: seasonXOffset[i] + season.min - 0.5, width: 1, color: "black"
         });
     }
     var chartSeries = series.map(function (_a, si) {
@@ -173,7 +173,7 @@ function showChart(series) {
                 marker: { enabled: false },
                 dashStyle: 'shortdot',
                 data: linearRegression(chartSeries[i].data),
-                color: chartSeries[i].color,
+                color: chartSeries[i].color
             });
         }
     if (qd["noSeasonTrend"] === undefined) {
@@ -220,7 +220,7 @@ function showChart(series) {
                 max: 10,
                 min: qd["noCutoff"] !== undefined ? 0 : undefined,
                 title: { text: "Rating" },
-                tickInterval: 1,
+                tickInterval: 1
             },
             tooltip: {
                 formatter: function () {
@@ -267,7 +267,7 @@ function seriesToAutocomplete(series, inx) {
                     matchOptions: function (inp, res) { return res.slice(0, 20).filter(function (v) { return !currentDisplay.some(function (_a) {
                         var i = _a[0], s = _a[1];
                         return i === v.value;
-                    }); }); },
+                    }); }); }
                 } },
             onChange: function (val) { return showChart(val.map(function (v) { return [v[0].value, database.series[v[0].value]]; })); }
         });

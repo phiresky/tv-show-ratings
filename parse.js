@@ -15,7 +15,7 @@ var baseConfig = {
             year: true,
             rating: true,
             votes: true,
-            distribution: false,
+            distribution: false
         },
         episode: {
             rating: true,
@@ -23,7 +23,7 @@ var baseConfig = {
             episode: true,
             title: false,
             votes: false,
-            distribution: false,
+            distribution: false
         }
     }
 };
