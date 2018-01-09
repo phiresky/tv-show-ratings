@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
-		"target": "ES5",
+		"moduleResolution": "node",
+		"strict": true,
+		"target": "ES6",
 		"outDir": "bin",
 		"watch": false,
 		"sourceMap": true,

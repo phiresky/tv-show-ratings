@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "parse": "ts-node --max-old-space-size=10000 src/parse.ts"
+  },
+  "dependencies": {
+    "@types/mz": "^0.0.32",
+    "@types/protobufjs": "^6.0.0",
+    "mz": "^2.7.0",
+    "proto2typescript": "^2.2.0",
+    "protobufjs": "^6.8.4",
+    "ts-node": "^4.1.0",
+    "typescript": "^2.7.0-dev.20180107"
+  }
+}
