@@ -1,0 +1,85 @@
+import * as React from "react";
+import { TorrentDataProvider } from "./load";
+import HighchartsReact from "highcharts-react-official";
+import Highcharts from "highcharts";
+import { observable, computed } from "mobx";
+import { observer } from "mobx-react";
+import { chartOptions } from "./render";
+import { fromPromise, lazyObservable } from "mobx-utils";
+import AsyncSelect from "react-select/lib/Async";
+import TrieSearch from "trie-search";
+import { imdbproto } from "../lib/ratings";
+
+type P = { data: TorrentDataProvider; initialSeries: string[] };
+@observer
+export default class Gui extends React.Component<P> {
+	@observable
+	seriesNames: string[] = [];
+
+	options: TrieSearch | null = null;
+	constructor(p: P) {
+		super(p);
+		this.seriesNames = p.initialSeries;
+	}
+
+	@computed
+	get currentSeriesData() {
+		return fromPromise(
+			(async () => {
+				if (this.seriesNames.length === 0) return null;
+				console.log("fetching", this.seriesNames.slice());
+				const series = await Promise.all(this.seriesNames.map(name => this.props.data.getSeriesInfo(name)));
+				console.log("got series data", series);
+				return chartOptions(series.filter((s): s is imdbproto.DB.ISeries => !!s));
+			})()
+		);
+	}
+
+	loading: Promise<string[]> | null = null;
+	getOptions = async (filter: string) => {
+		if (!this.options) {
+			if (this.loading) await this.loading;
+			else {
+				this.loading = this.props.data.getNames();
+				const ret = await this.loading;
+				this.options = new TrieSearch("value", {
+					min: 1
+				});
+				this.options.addAll(ret.map(value => ({ value })));
+			}
+		}
+		return this.options
+			.get(filter)
+			.map(p => p.value)
+			.slice(0, 100);
+	};
+	render() {
+		return (
+			<>
+				{this.currentSeriesData.case({
+					pending: () => <>Loading...</>,
+					fulfilled: options =>
+						options ? <HighchartsReact highcharts={Highcharts} options={options} /> : <>Empty</>,
+					rejected: e => {
+						console.error(e);
+						return <>Error: {e.toString()}</>;
+					}
+				})}
+				<AsyncSelect<string>
+					loadOptions={this.getOptions}
+					getOptionLabel={o => o}
+					getOptionValue={o => o}
+					value={this.seriesNames}
+					// defaultOptions={true}
+					isMulti
+					onChange={o => (this.seriesNames = o as string[])}
+				/>
+				<footer>
+					<p>
+						<a href="https://github.com/phiresky/tv-show-ratings">Source on GitHub</a>
+					</p>
+				</footer>
+			</>
+		);
+	}
+}

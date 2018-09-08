@@ -2,3 +2,9 @@ lib/
 bin/
 data/
 node_modules/
+
+/target/
+**/*.rs.bk
+/.vscode
+/.cache
+/dist

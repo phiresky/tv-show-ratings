@@ -1,21 +1,24 @@
+syntax = "proto3";
+
 package imdbproto;
 
 message DB {
 	message Series {
-		optional string title = 1;
-		optional int32 year = 2;
-		optional int32 rating = 3;
-		optional int32 votes = 4;
-		repeated Episode episodes = 5;
-		optional int64 distribution = 6;
+		string title = 1;
+		int32 start_year = 2;
+		int32 end_year = 3;
+		int32 rating = 4;
+		int32 votes = 5;
+		repeated Episode episodes = 6;
+		int64 distribution = 7;
 
 		message Episode {
-			optional int32 rating = 1;
-			optional int32 season = 2;
-			optional int32 episode = 3;
-			optional string title = 4;
-			optional int32 votes = 5;
-			optional int64 distribution = 6;
+			int32 rating = 1;
+			int32 season = 2;
+			int32 episode = 3;
+			string title = 4;
+			int32 votes = 5;
+			int64 distribution = 6;
 		}
 	}
 
