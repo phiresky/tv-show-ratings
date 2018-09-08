@@ -17,6 +17,7 @@ export class TorrentDataProvider {
 	cFileMap: Map<string, imdbproto.DB> = new Map();
 	constructor(private progress: (message: string) => void) {
 		this.torrent = this.client.add(new URL(uri, location.href).href);
+		this.torrent.on("infoHash", () => console.log("infoHash", this.torrent.infoHash));
 		this.progress("loading index");
 		this.torrent.on("noPeers", function(announceType) {
 			console.log("got no peers from", announceType);
@@ -25,6 +26,7 @@ export class TorrentDataProvider {
 			console.log("got all data");
 		});
 		this.torrent.on("warning", e => {
+			if (e && e instanceof Error && e.message.startsWith("Unsupported tracker protocol")) return;
 			console.log(e);
 		});
 		/*let total = 0;

@@ -54,7 +54,6 @@ function linearRegression(ps: { x: number; y: number }[]) {
 }
 type IEpisode = imdbproto.DB.Series.IEpisode;
 type ISeries = imdbproto.DB.ISeries;
-type IndexedSeries = [number, ISeries];
 
 const colors = [
 	"#7cb5ec",
@@ -68,9 +67,6 @@ const colors = [
 	"#f45b5b",
 	"#91e8e1"
 ];
-let renderSuccess = false;
-let autoComplete: any;
-let chart: any;
 
 function episodeString(ep: IEpisode) {
 	const s = ep.season,
@@ -238,7 +234,7 @@ export function chartOptions(series: ISeries[]) {
 }
 async function loadUi() {
 	const res = new TorrentDataProvider(console.log);
-	const initialSeries = qd.t ? qd.t.replace(/_/g, " ").split("+") : [];
+	const initialSeries = qd.t ? qd.t.replace(/_/g, " ").split("+") : ["Game of Thrones (2011- )"];
 	render(<Gui data={res} initialSeries={initialSeries} />, document.getElementById("app"));
 }
 loadUi();
