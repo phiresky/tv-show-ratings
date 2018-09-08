@@ -1,7 +1,9 @@
 {
 	"scripts": {
-		"parse": "ts-node --max-old-space-size=10000 src/parse.ts",
-		"proto-gen": "pbjs -t static-module -w es6 -o lib/ratings.js src/ratings.proto && pbts -o lib/ratings.d.ts lib/ratings.js"
+		"parse": "cd rust && cargo run --release",
+		"proto-gen": "pbjs -t static-module -w es6 -o lib/ratings.js src/ratings.proto && pbts -o lib/ratings.d.ts lib/ratings.js",
+		"dev": "parcel --public-url . src/index.html --no-hmr",
+		"build": "parcel build --public-url . src/index.html"
 	},
 	"dependencies": {
 		"@types/es6-promisify": "^6.0.0",
