@@ -62,7 +62,8 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
                     episodes: vec![],
                     rating: 0,
                     votes: 0,
-                    year: 0,
+                    start_year: data.startYear.unwrap_or(0),
+                    end_year: data.endYear.unwrap_or(0),
                 };
                 series_map.insert(data.tconst, ser);
             }
@@ -105,10 +106,12 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
             series_map.get_mut(&data.parentTconst),
             episodes_map.remove(&data.tconst),
         ) {
-            episode.episode = data.episodeNumber.unwrap_or(0);
-            episode.season = data.seasonNumber.unwrap_or(0);
+            if let (Some(episode_num), Some(season)) = (data.episodeNumber, data.seasonNumber) {
+                episode.episode = episode_num;
+                episode.season = season;
 
-            series.episodes.push(episode);
+                series.episodes.push(episode);
+            }
         } else {
             eprintln!(
                 "Warning: could not find series {} episode {} S{}E{}",
@@ -118,6 +121,13 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
                 data.episodeNumber.unwrap_or(0)
             );
         }
+    }
+    eprintln!("Sorting episodes");
+    for (_, series) in series_map.iter_mut() {
+        series.episodes.retain(|e| e.rating != 0);
+        series
+            .episodes
+            .sort_by(|a, b| a.season.cmp(&b.season).then(a.episode.cmp(&b.episode)));
     }
 
     Ok(series_map
@@ -139,25 +149,52 @@ fn write_with_config(
     let len = db.encoded_len();
     println!("len will be: {} kB", len / 1000);
     let mut x = BytesMut::with_capacity(len);
-    db.encode(&mut x);
+    db.encode(&mut x)?;
     let mut f = File::create(&config.outputFilename)?;
     f.write_all(&x[..])?;
     Ok(())
 }
-fn hashn(s: &str) -> u8 {
-    let res = Sha256::digest(s.as_bytes());
+// must be same as typescript
+fn series_key(s: &ratings::db::Series) -> String {
+    format!(
+        "{} ({}-{})",
+        s.title,
+        if s.start_year == 0 {
+            " ".to_owned()
+        } else {
+            format!("{}", s.start_year)
+        },
+        if s.end_year == 0 {
+            " ".to_owned()
+        } else {
+            format!("{}", s.end_year)
+        }
+    )
+}
+fn hashn(s: &ratings::db::Series) -> u8 {
+    let res = Sha256::digest(series_key(s).as_bytes());
     res[0]
 }
 fn my_main() -> Result<(), Box<Error>> {
     let mut all_series: Vec<_> = load_series()?
         .into_iter()
-        .map(|s| (hashn(&s.title), s))
+        .filter(|s| s.episodes.len() > 5 && s.votes > 10)
+        .map(|s| (hashn(&s), s))
         .collect();
     all_series.sort_by_key(|(hashstart, _)| *hashstart);
 
+    let file = File::create("data/titles.json")?;
+    serde_json::to_writer(
+        file,
+        &all_series
+            .iter()
+            .map(|(_, s)| series_key(s))
+            .collect::<Vec<_>>(),
+    )?;
+
     for (hash_start, series) in &all_series.into_iter().group_by(|(hashstart, _)| *hashstart) {
         let config = Config {
-            filter: |_| true,
+            filter: |s| true,
             outputFilename: format!("data/{:02x}.buf", hash_start),
         };
         write_with_config(series.map(|(_, s)| s), &config)?;

@@ -5,13 +5,11 @@
 		"target": "ES6",
 		"outDir": "bin",
 		"watch": false,
+		"jsx": "react",
 		"sourceMap": true,
-		"noImplicitAny": true
+		"noImplicitAny": true,
+		"allowSyntheticDefaultImports": true,
+		"experimentalDecorators": true
 	},
-	"files": [
-		"./lib/typings/tsd.d.ts",
-		"./lib/ratings.d.ts",
-		"./src/parse.ts",
-		"./src/render.ts"
-	]
+	"files": ["./lib/ratings.d.ts", "./src/parse.ts", "./src/render.tsx"]
 }
