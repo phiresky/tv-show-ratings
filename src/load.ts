@@ -2,24 +2,30 @@ import WebTorrent, { TorrentFile } from "webtorrent";
 import { imdbproto } from "../lib/ratings";
 import { promisify } from "es6-promisify";
 import { sha256 } from "js-sha256";
+import uri from "../rust/data.torrent";
 
 // must be same as rust
 export function series_key(s: imdbproto.DB.ISeries) {
 	return `${s.title} (${s.startYear || " "}-${s.endYear || " "})`;
 }
 
-const dontDownloadUnneeded = true;
+const dontDownloadUnneeded = false;
 export class TorrentDataProvider {
 	client = new WebTorrent();
 	torrent: WebTorrent.Torrent;
 	tFileMap: Promise<Map<string, TorrentFile>>;
 	cFileMap: Map<string, imdbproto.DB> = new Map();
-	constructor(magnetURI: string, private progress: (message: string) => void) {
-		this.torrent = this.client.add(magnetURI);
-
+	constructor(private progress: (message: string) => void) {
+		this.torrent = this.client.add(new URL(uri, location.href).href);
 		this.progress("loading index");
 		this.torrent.on("noPeers", function(announceType) {
 			console.log("got no peers from", announceType);
+		});
+		this.torrent.on("done", () => {
+			console.log("got all data");
+		});
+		this.torrent.on("warning", e => {
+			console.log(e);
 		});
 		/*let total = 0;
 		this.torrent.on("download", bytes => {
@@ -31,6 +37,10 @@ export class TorrentDataProvider {
 	private async _indexReady() {
 		await new Promise(ready => this.torrent.on("ready", ready));
 		this.progress("index loaded");
+		/*this.torrent.addWebSeed(
+			""
+		);*/
+		console.log(this.torrent);
 		if (dontDownloadUnneeded) {
 			this.torrent.deselect(0, this.torrent.pieces.length - 1, 0);
 		}

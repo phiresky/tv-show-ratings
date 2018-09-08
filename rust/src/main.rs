@@ -20,30 +20,24 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{self, BufReader};
 use std::path::Path;
 
 mod tsvs;
 use tsvs::*;
-const dirname: &str = "../data";
+const DIRNAME: &str = "../data";
 
 mod ratings {
     include!(concat!(env!("OUT_DIR"), "/imdbproto.rs"));
 }
 
-struct Config {
-    pub filter: fn(x: &ratings::db::Series) -> bool,
-    pub outputFilename: String,
-}
-const minEpisodes: usize = 3;
-const minVotes: i32 = 30;
-const popularVotes: i32 = 20000;
+const MIN_EPISODES: usize = 5;
+const MIN_VOTES: i32 = 30;
 
 fn load(fname: &str) -> Result<csv::Reader<std::fs::File>, csv::Error> {
     csv::ReaderBuilder::new()
         .delimiter(b'\t')
         .quote(b'\t')
-        .from_path(Path::new(dirname).join(fname))
+        .from_path(Path::new(DIRNAME).join(fname))
 }
 
 fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
@@ -56,7 +50,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
         let data: title_basics = l?;
         match data.titleType.as_ref() {
             "tvSeries" | "tvMiniSeries" => {
-                let mut ser = ratings::db::Series {
+                let ser = ratings::db::Series {
                     title: data.primaryTitle,
                     distribution: 0,
                     episodes: vec![],
@@ -68,7 +62,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
                 series_map.insert(data.tconst, ser);
             }
             "tvEpisode" => {
-                let mut ep = ratings::db::series::Episode {
+                let ep = ratings::db::series::Episode {
                     title: String::from(""), //data.primaryTitle,
                     distribution: 0,
                     season: 0,
@@ -132,17 +126,16 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
 
     Ok(series_map
         .into_iter()
-        .map(|(k, v): (String, ratings::db::Series)| v)
+        .map(|(_, v): (String, ratings::db::Series)| v)
         .collect())
 }
 
 fn write_with_config(
     series: impl Iterator<Item = ratings::db::Series>,
-    config: &Config,
+    out_path: &str,
 ) -> Result<(), Box<Error>> {
     let db = ratings::Db {
         series: series
-            .filter(|e| (config.filter)(e))
             .map(|s| s.clone())
             .collect(),
     };
@@ -150,7 +143,7 @@ fn write_with_config(
     println!("len will be: {} kB", len / 1000);
     let mut x = BytesMut::with_capacity(len);
     db.encode(&mut x)?;
-    let mut f = File::create(&config.outputFilename)?;
+    let mut f = File::create(out_path)?;
     f.write_all(&x[..])?;
     Ok(())
 }
@@ -178,7 +171,7 @@ fn hashn(s: &ratings::db::Series) -> u8 {
 fn my_main() -> Result<(), Box<Error>> {
     let mut all_series: Vec<_> = load_series()?
         .into_iter()
-        .filter(|s| s.episodes.len() > 5 && s.votes > 10)
+        .filter(|s| s.episodes.len() > MIN_EPISODES && s.votes > MIN_VOTES)
         .map(|s| (hashn(&s), s))
         .collect();
     all_series.sort_by_key(|(hashstart, _)| *hashstart);
@@ -193,11 +186,7 @@ fn my_main() -> Result<(), Box<Error>> {
     )?;
 
     for (hash_start, series) in &all_series.into_iter().group_by(|(hashstart, _)| *hashstart) {
-        let config = Config {
-            filter: |s| true,
-            outputFilename: format!("data/{:02x}.buf", hash_start),
-        };
-        write_with_config(series.map(|(_, s)| s), &config)?;
+        write_with_config(series.map(|(_, s)| s), &format!("data/{:02x}.buf", hash_start))?;
     }
     Ok(())
 }

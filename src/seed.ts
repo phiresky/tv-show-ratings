@@ -1,15 +1,15 @@
 import * as WebTorrent from "webtorrent-hybrid";
-
+import * as fs from "fs";
 const t = new WebTorrent();
 
 t.seed(
-	"rust/data",
+	"rust/data/",
 	{
-		name: "data",
-		announceList: [["ws://138.68.90.92:8001"]]
+		name: "data"
 		//pieceLength: 2 ** 15
 	},
 	torrent => {
 		console.log(torrent.magnetURI);
+		fs.writeFileSync("rust/data.torrent", torrent.torrentFile);
 	}
 );

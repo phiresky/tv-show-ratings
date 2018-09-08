@@ -236,10 +236,8 @@ export function chartOptions(series: ISeries[]) {
 	updateQueryString();
 	return options;
 }
-const uri =
-	"magnet:?xt=urn:btih:3921b91024227c32918596a724c85a16da43d8d8&dn=data&tr=ws%3A%2F%2F138.68.90.92%3A8001&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com";
 async function loadUi() {
-	const res = new TorrentDataProvider(uri, console.log);
+	const res = new TorrentDataProvider(console.log);
 	const initialSeries = qd.t ? qd.t.replace(/_/g, " ").split("+") : [];
 	render(<Gui data={res} initialSeries={initialSeries} />, document.getElementById("app"));
 }

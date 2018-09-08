@@ -1,7 +1,8 @@
+#![allow(non_snake_case, non_camel_case_types)]
+
 use serde;
 use serde::{Deserialize, Deserializer};
 use std;
-use std::error::Error;
 
 pub fn nullable<'de, D, T>(de: D) -> std::result::Result<Option<T>, D::Error>
 where
