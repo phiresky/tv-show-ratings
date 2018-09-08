@@ -5,10 +5,13 @@
   "dependencies": {
     "@types/mz": "^0.0.32",
     "@types/protobufjs": "^6.0.0",
+    "@types/webtorrent": "^0.98.4",
     "mz": "^2.7.0",
+    "parcel": "^1.9.7",
     "proto2typescript": "^2.2.0",
-    "protobufjs": "^6.8.4",
+    "protobufjs": "^6.8.8",
     "ts-node": "^4.1.0",
-    "typescript": "^2.7.0-dev.20180107"
+    "typescript": "^2.7.0-dev.20180107",
+    "webtorrent": "^0.102.4"
   }
 }

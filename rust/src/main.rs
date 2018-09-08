@@ -9,8 +9,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate prost_derive;
 extern crate bytes;
+extern crate indicatif;
+extern crate itertools;
+extern crate sha2;
 use bytes::BytesMut;
+use itertools::Itertools;
 use prost::Message;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
@@ -46,6 +51,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
     let mut episodes_map: HashMap<String, ratings::db::series::Episode> = HashMap::new();
     let mut basics = load("title.basics.tsv")?;
     eprintln!("Loading basics");
+    // let progress = indicatif::ProgressBar::new(6_000_000); large slowdown when using progress bar...
     for l in basics.deserialize() {
         let data: title_basics = l?;
         match data.titleType.as_ref() {
@@ -80,10 +86,10 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
     for l in ratings.deserialize() {
         let data: title_ratings = l?;
         let rating = (data.averageRating * 10.0).round() as i32;
-        if let Some(mut episode) = episodes_map.get_mut(&data.tconst) {
+        if let Some(episode) = episodes_map.get_mut(&data.tconst) {
             episode.rating = rating;
             episode.votes = data.numVotes;
-        } else if let Some(mut series) = series_map.get_mut(&data.tconst) {
+        } else if let Some(series) = series_map.get_mut(&data.tconst) {
             series.rating = rating;
             series.votes = data.numVotes;
         } else {
@@ -95,7 +101,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
     let mut episodes = load("title.episode.tsv")?;
     for l in episodes.deserialize() {
         let data: title_episode = l?;
-        if let (Some(mut series), Some(mut episode)) = (
+        if let (Some(series), Some(mut episode)) = (
             series_map.get_mut(&data.parentTconst),
             episodes_map.remove(&data.tconst),
         ) {
@@ -120,10 +126,12 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
         .collect())
 }
 
-fn write_with_config(series: &[ratings::db::Series], config: &Config) -> Result<(), Box<Error>> {
+fn write_with_config(
+    series: impl Iterator<Item = ratings::db::Series>,
+    config: &Config,
+) -> Result<(), Box<Error>> {
     let db = ratings::Db {
         series: series
-            .iter()
             .filter(|e| (config.filter)(e))
             .map(|s| s.clone())
             .collect(),
@@ -136,57 +144,24 @@ fn write_with_config(series: &[ratings::db::Series], config: &Config) -> Result<
     f.write_all(&x[..])?;
     Ok(())
 }
+fn hashn(s: &str) -> u8 {
+    let res = Sha256::digest(s.as_bytes());
+    res[0]
+}
 fn my_main() -> Result<(), Box<Error>> {
-    let econfig: Config = Config {
-        filter: |series| series.votes >= popularVotes && series.episodes.len() >= minEpisodes,
-        outputFilename: "basedata-popular.buf.js".to_owned(),
-    };
-    let unpopconfig: Config = Config {
-        filter: |series| {
-            series.votes > minVotes
-                && series.votes < popularVotes
-                && series.episodes.len() >= minEpisodes
-        },
-        outputFilename: "basedata-unpopular.buf.js".to_owned(),
-    };
-
-    let series = load_series()?;
-    eprintln!("loaded {} series", series.len());
-    write_with_config(&series, &econfig)?;
-    write_with_config(&series, &unpopconfig)?;
-
-    let mut cursize = 0;
-    let mut curseries = Vec::new();
-    let chunksize = 50 * 1000;
-    let mut chunks = Vec::new();
-    let mut chunknames = Vec::new();
-    for serie in series
+    let mut all_series: Vec<_> = load_series()?
         .into_iter()
-        .filter(|series| series.votes > minVotes && series.episodes.len() >= minEpisodes)
-    {
-        cursize += serie.encoded_len();
-        curseries.push(serie);
-        if (cursize >= chunksize) {
-            eprintln!("creating chunk of size {} kB", cursize / 1000);
-            cursize = 0;
-            let config = Config {
-                filter: |series| true,
-                outputFilename: format!("test/chunk-{:05}.js", chunks.len()),
-            };
-            write_with_config(&curseries, &config);
+        .map(|s| (hashn(&s.title), s))
+        .collect();
+    all_series.sort_by_key(|(hashstart, _)| *hashstart);
 
-            chunknames.push(
-                curseries
-                    .iter()
-                    .map(|ref s| (&s.title).clone())
-                    .collect::<Vec<_>>(),
-            );
-            chunks.push(curseries);
-            curseries = Vec::new();
-        }
+    for (hash_start, series) in &all_series.into_iter().group_by(|(hashstart, _)| *hashstart) {
+        let config = Config {
+            filter: |_| true,
+            outputFilename: format!("data/{:02x}.buf", hash_start),
+        };
+        write_with_config(series.map(|(_, s)| s), &config)?;
     }
-    let file = File::create("test/chunks.json")?;
-    serde_json::to_writer(file, &chunknames);
     Ok(())
 }
 
