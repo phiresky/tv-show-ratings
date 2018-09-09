@@ -6,8 +6,17 @@
 
 This project plots the episode ratings of TV shows and their trends.
 
-To parse / convert the data use `cd parse-data-rs && ./getdata.sh && cargo run --release`.
+To parse / convert the data:
 
-To run the project first run `yarn && yarn run proto-gen` then run `yarn run dev`.
+```sh
+yarn
+cd parse-data-rs
+./getdata.sh
+cargo run --release
+cd ..
+yarn run ts-node --transpileOnly src/seed
+```
+
+To run the project first run `yarn run proto-gen` then run `yarn run dev`.
 
 To build the production version run `yarn run build`.
