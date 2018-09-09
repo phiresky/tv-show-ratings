@@ -69,14 +69,14 @@ const colors = [
 ];
 
 function episodeString(ep: IEpisode) {
-	const s = ep.season,
-		e = ep.episode;
+	const s = ep.season!,
+		e = ep.episode!;
 	return `S${s < 10 ? "0" + s : s} E${e < 10 ? "0" + e : e}`;
 }
 type Bounds = { min: number; max: number };
 function seriesToSeasons(series: ISeries) {
 	const seasons: Bounds[] = [];
-	for (const ep of series.episodes) {
+	for (const ep of series.episodes!) {
 		if (!ep.season || !ep.episode) {
 			ep.season = 0;
 			ep.episode = 0;
@@ -233,7 +233,7 @@ export function chartOptions(series: ISeries[]) {
 	return options;
 }
 async function loadUi() {
-	const res = new TorrentDataProvider(console.log);
+	const res = new TorrentDataProvider(console.log.bind(console));
 	const initialSeries = qd.t ? qd.t.replace(/_/g, " ").split("+") : ["Game of Thrones (2011- )"];
 	render(<Gui data={res} initialSeries={initialSeries} />, document.getElementById("app"));
 }
