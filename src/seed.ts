@@ -3,13 +3,13 @@ import * as fs from "fs";
 const t = new WebTorrent();
 
 t.seed(
-	"rust/data/",
+	"parse-data-rs/data/",
 	{
 		name: "data"
 		//pieceLength: 2 ** 15
 	},
 	torrent => {
 		console.log(torrent.magnetURI);
-		fs.writeFileSync("rust/data.torrent", torrent.torrentFile);
+		fs.writeFileSync("parse-data-rs/data.torrent", torrent.torrentFile);
 	}
 );

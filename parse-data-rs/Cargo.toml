@@ -1,6 +1,6 @@
 [package]
 authors = ["phiresky <phireskyde+git@gmail.com>"]
-name = "rust"
+name = "parse-data-rs"
 version = "0.1.0"
 
 [dependencies]

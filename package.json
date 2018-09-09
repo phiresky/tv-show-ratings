@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"parse": "cd rust && cargo run --release",
+		"parse": "cd parse-data-rs && cargo run --release",
 		"proto-gen": "pbjs -t static-module -w es6 -o lib/ratings.js src/ratings.proto && pbts -o lib/ratings.d.ts lib/ratings.js",
 		"dev": "parcel src/index.html --no-hmr",
 		"build": "parcel build --public-url . src/index.html --detailed-report"

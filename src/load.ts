@@ -3,7 +3,7 @@ import { imdbproto } from "../lib/ratings";
 import { promisify } from "es6-promisify";
 import { sha256 } from "js-sha256";
 import idb from "indexeddb-chunk-store";
-import uri from "../rust/data.torrent";
+import uri from "../parse-data-rs/data.torrent";
 
 // must be same as rust
 export function series_key(s: imdbproto.DB.ISeries) {
