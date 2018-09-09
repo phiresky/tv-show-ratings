@@ -24,7 +24,7 @@ use std::path::Path;
 
 mod tsvs;
 use tsvs::*;
-const DIRNAME: &str = "../data";
+const DIRNAME: &str = "data-in";
 
 mod ratings {
     include!(concat!(env!("OUT_DIR"), "/imdbproto.rs"));
@@ -135,9 +135,7 @@ fn write_with_config(
     out_path: &str,
 ) -> Result<(), Box<Error>> {
     let db = ratings::Db {
-        series: series
-            .map(|s| s.clone())
-            .collect(),
+        series: series.map(|s| s.clone()).collect(),
     };
     let len = db.encoded_len();
     println!("len will be: {} kB", len / 1000);
@@ -186,7 +184,10 @@ fn my_main() -> Result<(), Box<Error>> {
     )?;
 
     for (hash_start, series) in &all_series.into_iter().group_by(|(hashstart, _)| *hashstart) {
-        write_with_config(series.map(|(_, s)| s), &format!("data/{:02x}.buf", hash_start))?;
+        write_with_config(
+            series.map(|(_, s)| s),
+            &format!("data/{:02x}.buf", hash_start),
+        )?;
     }
     Ok(())
 }
