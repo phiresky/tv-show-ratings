@@ -2,6 +2,7 @@ import WebTorrent, { TorrentFile } from "webtorrent";
 import { imdbproto } from "../lib/ratings";
 import { promisify } from "es6-promisify";
 import { sha256 } from "js-sha256";
+import idb from "indexeddb-chunk-store";
 import uri from "../rust/data.torrent";
 
 // must be same as rust
@@ -16,7 +17,7 @@ export class TorrentDataProvider {
 	tFileMap: Promise<Map<string, TorrentFile>>;
 	cFileMap: Map<string, imdbproto.DB> = new Map();
 	constructor(private progress: (message: string) => void) {
-		this.torrent = this.client.add(new URL(uri, location.href).href);
+		this.torrent = this.client.add(new URL(uri, location.href).href, { store: idb });
 		this.torrent.on("infoHash", () => console.log("infoHash", this.torrent.infoHash));
 		this.progress("loading index");
 		this.torrent.on("noPeers", function(announceType) {
@@ -25,6 +26,7 @@ export class TorrentDataProvider {
 		this.torrent.on("done", () => {
 			console.log("got all data");
 		});
+		// this.torrent.on("metadata", storeTorrent);
 		this.torrent.on("warning", e => {
 			if (e && e instanceof Error && e.message.startsWith("Unsupported tracker protocol")) return;
 			console.log(e);
