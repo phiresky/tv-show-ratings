@@ -7,18 +7,13 @@ message DB {
 		string title = 1;
 		int32 start_year = 2;
 		int32 end_year = 3;
-		int32 rating = 4;
 		int32 votes = 5;
 		repeated Episode episodes = 6;
-		int64 distribution = 7;
 
 		message Episode {
 			int32 rating = 1;
 			int32 season = 2;
 			int32 episode = 3;
-			string title = 4;
-			int32 votes = 5;
-			int64 distribution = 6;
 		}
 	}
 

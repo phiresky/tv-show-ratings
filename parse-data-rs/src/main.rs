@@ -8,6 +8,7 @@ extern crate serde_json;
 extern crate serde_derive;
 #[macro_use]
 extern crate prost_derive;
+use std::time::{Duration, Instant};
 extern crate bytes;
 extern crate indicatif;
 extern crate itertools;
@@ -21,6 +22,8 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+extern crate rayon;
+use rayon::prelude::*;
 
 mod tsvs;
 use tsvs::*;
@@ -45,6 +48,8 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
     let mut episodes_map: HashMap<String, ratings::db::series::Episode> = HashMap::new();
     let mut basics = load("title.basics.tsv")?;
     eprintln!("Loading basics");
+    //let mut c = 0;
+    let now = Instant::now();
     // let progress = indicatif::ProgressBar::new(6_000_000); large slowdown when using progress bar...
     for l in basics.deserialize() {
         let data: title_basics = l?;
@@ -52,9 +57,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
             "tvSeries" | "tvMiniSeries" => {
                 let ser = ratings::db::Series {
                     title: data.primaryTitle,
-                    distribution: 0,
                     episodes: vec![],
-                    rating: 0,
                     votes: 0,
                     start_year: data.startYear.unwrap_or(0),
                     end_year: data.endYear.unwrap_or(0),
@@ -63,18 +66,17 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
             }
             "tvEpisode" => {
                 let ep = ratings::db::series::Episode {
-                    title: String::from(""), //data.primaryTitle,
-                    distribution: 0,
                     season: 0,
                     episode: 0,
                     rating: 0,
-                    votes: 0,
                 };
                 episodes_map.insert(data.tconst, ep);
             }
             _ => {}
         }
     }
+    println!("{:?}", now.elapsed());
+    //return Ok(vec![]);
     eprintln!("Loading ratings");
 
     let mut ratings = load("title.ratings.tsv")?;
@@ -83,9 +85,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
         let rating = (data.averageRating * 10.0).round() as i32;
         if let Some(episode) = episodes_map.get_mut(&data.tconst) {
             episode.rating = rating;
-            episode.votes = data.numVotes;
         } else if let Some(series) = series_map.get_mut(&data.tconst) {
-            series.rating = rating;
             series.votes = data.numVotes;
         } else {
             // eprintln!("Warning: could not find title {}", data.tconst);
@@ -174,7 +174,7 @@ fn my_main() -> Result<(), Box<Error>> {
         .collect();
     all_series.sort_by_key(|(hashstart, _)| *hashstart);
 
-    let file = File::create("data/titles.json")?;
+    /*let file = File::create("data/titles.json")?;
     serde_json::to_writer(
         file,
         &all_series
@@ -182,6 +182,9 @@ fn my_main() -> Result<(), Box<Error>> {
             .map(|(_, s)| series_key(s))
             .collect::<Vec<_>>(),
     )?;
+    for (_, series) in &all_series {
+        serde_json::to_writer(File::create(format!("tmpd/{}.json", series_key(series).replace("/", "_")))?, series)?;
+    }*/
 
     for (hash_start, series) in &all_series.into_iter().group_by(|(hashstart, _)| *hashstart) {
         write_with_config(
