@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TorrentDataProvider } from "./load";
+import { TorrentDataProvider, IndexType } from "./load";
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from "highcharts";
 /*import Highcharts from "highcharts/js/es-modules/parts/Globals";
@@ -19,6 +19,8 @@ import TrieSearch from "trie-search";
 import { imdbproto } from "../lib/ratings";
 
 type P = { data: TorrentDataProvider; initialSeries: string[] };
+
+const minSearchLength = 2;
 @observer
 export default class Gui extends React.Component<P> {
 	@observable
@@ -43,22 +45,27 @@ export default class Gui extends React.Component<P> {
 		);
 	}
 
-	loading: Promise<string[]> | null = null;
+	loading: Promise<IndexType[]> | null = null;
 	getOptions = async (filter: string) => {
 		if (!this.options) {
 			if (this.loading) await this.loading;
 			else {
 				this.loading = this.props.data.getNames();
 				const ret = await this.loading;
-				this.options = new TrieSearch("value", {
-					min: 1
+				this.options = new TrieSearch("title", {
+					min: minSearchLength
 				});
-				this.options.addAll(ret.map(value => ({ value })));
+				this.options.addAll(ret.map(([title, priority]) => ({ title, priority })));
 			}
+		}
+		if (filter.length < minSearchLength) {
+			// infinitely waiting promise
+			return new Promise(() => {});
 		}
 		return this.options
 			.get(filter)
-			.map(p => p.value)
+			.sort((a, b) => b.priority - a.priority)
+			.map(p => p.title)
 			.slice(0, 100);
 	};
 	render() {
@@ -77,6 +84,7 @@ export default class Gui extends React.Component<P> {
 					loadOptions={this.getOptions}
 					getOptionLabel={o => o}
 					getOptionValue={o => o}
+					placeholder="Enter series name..."
 					value={this.seriesNames}
 					// defaultOptions={true}
 					isMulti

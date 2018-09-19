@@ -10,6 +10,9 @@ export function series_key(s: imdbproto.DB.ISeries) {
 	return `${s.title} (${s.startYear || " "}-${s.endYear || " "})`;
 }
 
+/** [title, votecount] */
+export type IndexType = [string, number];
+
 const dontDownloadUnneeded = false;
 export class TorrentDataProvider {
 	client = new WebTorrent();
@@ -59,7 +62,7 @@ export class TorrentDataProvider {
 		const blobUrl = await promisify(inx.getBlobURL.bind(inx) as typeof inx.getBlobURL)();
 		this.progress("loading names 2");
 		const res = await fetch(blobUrl).then(p => p.json());
-		return res as string[];
+		return res as IndexType[];
 	}
 
 	async getSeriesInfo(seriesName: string) {
