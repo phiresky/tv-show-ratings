@@ -47,41 +47,45 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
     let mut series_map: HashMap<String, ratings::db::Series> = HashMap::new();
     let mut episodes_map: HashMap<String, ratings::db::series::Episode> = HashMap::new();
     let mut basics = load("title.basics.tsv")?;
+    let headers = basics.byte_headers()?.clone();
     eprintln!("Loading basics");
     //let mut c = 0;
     let now = Instant::now();
+
+    let mut raw_record = csv::ByteRecord::new();
     // let progress = indicatif::ProgressBar::new(6_000_000); large slowdown when using progress bar...
-    for l in basics.deserialize() {
-        let data: title_basics = l?;
+    while basics.read_byte_record(&mut raw_record)? {
+        let data: title_basics<&[u8]> = raw_record.deserialize(Some(&headers))?;
+        use std::str;
         match data.titleType.as_ref() {
-            "tvSeries" | "tvMiniSeries" => {
+            b"tvSeries" | b"tvMiniSeries" => {
                 let ser = ratings::db::Series {
-                    title: data.primaryTitle,
+                    title: str::from_utf8(data.primaryTitle)?.to_owned(),
                     episodes: vec![],
                     votes: 0,
                     start_year: data.startYear.unwrap_or(0),
                     end_year: data.endYear.unwrap_or(0),
                 };
-                series_map.insert(data.tconst, ser);
+                series_map.insert(str::from_utf8(data.tconst)?.to_owned(), ser);
             }
-            "tvEpisode" => {
+            b"tvEpisode" => {
                 let ep = ratings::db::series::Episode {
                     season: 0,
                     episode: 0,
                     rating: 0,
                 };
-                episodes_map.insert(data.tconst, ep);
+                episodes_map.insert(str::from_utf8(data.tconst)?.to_owned(), ep);
             }
             _ => {}
         }
     }
     println!("{:?}", now.elapsed());
-    //return Ok(vec![]);
+    // return Ok(vec![]);
     eprintln!("Loading ratings");
 
     let mut ratings = load("title.ratings.tsv")?;
     for l in ratings.deserialize() {
-        let data: title_ratings = l?;
+        let data: title_ratings<String> = l?;
         let rating = (data.averageRating * 10.0).round() as i32;
         if let Some(episode) = episodes_map.get_mut(&data.tconst) {
             episode.rating = rating;
@@ -91,11 +95,11 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
             // eprintln!("Warning: could not find title {}", data.tconst);
         }
     }
-
     eprintln!("Loading episodes");
+    let now = Instant::now();
     let mut episodes = load("title.episode.tsv")?;
-    for l in episodes.deserialize() {
-        let data: title_episode = l?;
+    for record in episodes.deserialize() {
+        let data: title_episode<String> = record?;
         if let (Some(series), Some(mut episode)) = (
             series_map.get_mut(&data.parentTconst),
             episodes_map.remove(&data.tconst),
@@ -116,6 +120,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
             );
         }
     }
+    println!("{:?}", now.elapsed());
     eprintln!("Sorting episodes");
     for (_, series) in series_map.iter_mut() {
         series.episodes.retain(|e| e.rating != 0);
@@ -138,7 +143,7 @@ fn write_with_config(
         series: series.map(|s| s.clone()).collect(),
     };
     let len = db.encoded_len();
-    println!("len will be: {} kB", len / 1000);
+    // println!("len will be: {} kB", len / 1000);
     let mut x = BytesMut::with_capacity(len);
     db.encode(&mut x)?;
     let mut f = File::create(out_path)?;
@@ -174,14 +179,14 @@ fn my_main() -> Result<(), Box<Error>> {
         .collect();
     all_series.sort_by_key(|(hashstart, _)| *hashstart);
 
-    /*let file = File::create("data/titles.json")?;
+    let file = File::create("data/titles.json")?;
     serde_json::to_writer(
         file,
         &all_series
             .iter()
-            .map(|(_, s)| series_key(s))
+            .map(|(_, s)| (series_key(s), s.votes))
             .collect::<Vec<_>>(),
-    )?;
+    )?;/*
     for (_, series) in &all_series {
         serde_json::to_writer(File::create(format!("tmpd/{}.json", series_key(series).replace("/", "_")))?, series)?;
     }*/

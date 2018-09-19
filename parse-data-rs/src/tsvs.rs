@@ -22,16 +22,22 @@ where
     })
 }
 
+// Something that serde can read a string as
+pub trait Stringable {}
+impl Stringable for String {}
+impl<'a> Stringable for &'a str {}
+impl<'a> Stringable for &'a [u8] {}
+
 #[derive(Debug, Deserialize)]
-pub struct title_basics {
+pub struct title_basics<S: Stringable> {
     /** (string) - alphanumeric unique identifier of the title*/
-    pub tconst: String,
+    pub tconst: S,
     /** (string) – the type/format of the title (e.g. movie, short, tvseries, tvepisode, video, etc)*/
-    pub titleType: String,
+    pub titleType: S,
     /** (string) – the more popular title / the title used by the filmmakers on promotional materials at the point of release*/
-    pub primaryTitle: String,
+    pub primaryTitle: S,
     /** (string) - original title, in the original language*/
-    pub originalTitle: String,
+    pub originalTitle: S,
     /** (boolean) - 0: non-adult title; 1: adult title.*/
     pub isAdult: i32,
     /** (YYYY) – represents the release year of a title. In the case of TV Series, it is the series start year.*/
@@ -44,27 +50,27 @@ pub struct title_basics {
     #[serde(deserialize_with = "nullable")]
     pub runtimeMinutes: Option<i32>,
     /** (string array) – includes up to three genres associated with the title*/
-    pub genres: String,
+    pub genres: S,
 }
 
 /** Contains the director and writer information for all the titles in IMDb. Fields include:*/
 #[derive(Debug, Deserialize)]
-pub struct title_crew {
+pub struct title_crew<S: Stringable> {
     /** (string) */
-    pub tconst: String,
+    pub tconst: S,
     /** (array of nconsts) - director(s) of the given title */
-    pub directors: String,
+    pub directors: S,
     /** (array of nconsts) – writer(s) of the given title */
-    pub writers: String,
+    pub writers: S,
 }
 
 /** Contains the tv episode information. Fields include:*/
 #[derive(Debug, Deserialize)]
-pub struct title_episode {
+pub struct title_episode<S: Stringable> {
     /** (string) - alphanumeric identifier of episode */
-    pub tconst: String,
+    pub tconst: S,
     /** (string) - alphanumeric identifier of the parent TV Series */
-    pub parentTconst: String,
+    pub parentTconst: S,
     /** (integer) – season number the episode belongs to */
     #[serde(deserialize_with = "nullable")]
     pub seasonNumber: Option<i32>,
@@ -75,18 +81,18 @@ pub struct title_episode {
 
 /** Contains the principal cast/crew for titles*/
 #[derive(Debug, Deserialize)]
-pub struct title_principals {
+pub struct title_principals<S: Stringable> {
     /** (string) */
-    pub tconst: String,
+    pub tconst: S,
     /** (array of nconsts) – title’s top-billed cast/crew */
-    pub principalCast: String,
+    pub principalCast: S,
 }
 
 /** Contains the IMDb rating and votes information for titles*/
 #[derive(Debug, Deserialize)]
-pub struct title_ratings {
+pub struct title_ratings<S: Stringable> {
     /** (string) */
-    pub tconst: String,
+    pub tconst: S,
     /** – weighted average of all the individual user ratings */
     pub averageRating: f32,
     /** - number of votes the title has received */
@@ -95,17 +101,17 @@ pub struct title_ratings {
 
 /** Contains the following information for names:*/
 #[derive(Debug, Deserialize)]
-pub struct name_basics {
+pub struct name_basics<S: Stringable> {
     /** (string) - alphanumeric unique identifier of the name/person */
-    pub nconst: String,
+    pub nconst: S,
     /** (string)– name by which the person is most often credited */
-    pub primaryName: String,
+    pub primaryName: S,
     /** – in YYYY format */
-    pub birthYear: String,
+    pub birthYear: S,
     /** – in YYYY format if applicable, else ‘\N’ */
-    pub deathYear: String,
+    pub deathYear: S,
     /** (array of strings)– the top-3 professions of the person */
-    pub primaryProfession: String,
+    pub primaryProfession: S,
     /** (array of tconsts) – titles the person is known for */
-    pub knownForTitles: String,
+    pub knownForTitles: S,
 }
