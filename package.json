@@ -30,10 +30,14 @@
 		"react": "^15.3.0 || ^16.0.0",
 		"react-dom": "^15.3.0 || ^16.0.0",
 		"react-select": "^2.0.0",
+		"simple-peer": "feross/simple-peer#90c14a8d9df1986ec1c751312e478fb70e122638",
 		"trie-search": "^1.2.8",
 		"ts-node": "^7.0.1",
 		"typescript": "^3.1.0-dev.20180907",
 		"webtorrent": "^0.102.4",
 		"webtorrent-hybrid": "^1.0.6"
+	},
+	"resolutions": {
+		"simple-peer": "feross/simple-peer#90c14a8d9df1986ec1c751312e478fb70e122638"
 	}
 }
