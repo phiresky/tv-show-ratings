@@ -234,7 +234,7 @@ export function chartOptions(series: ISeries[]) {
 }
 async function loadUi() {
 	const res = new TorrentDataProvider(console.log.bind(console));
-	const initialSeries = qd.t ? qd.t.replace(/_/g, " ").split("+") : ["Game of Thrones (2011- )"];
+	const initialSeries = qd.t ? qd.t.replace(/_/g, " ").split("+") : ["Game of Thrones (2011-2019)"];
 	render(<Gui data={res} initialSeries={initialSeries} />, document.getElementById("app"));
 }
 loadUi();

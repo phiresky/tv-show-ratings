@@ -2,13 +2,6 @@ import * as React from "react";
 import { TorrentDataProvider, IndexType } from "./load";
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from "highcharts";
-/*import Highcharts from "highcharts/js/es-modules/parts/Globals";
-import "highcharts/js/es-modules/parts/Chart";
-import "highcharts/js/es-modules/parts/SvgRenderer";
-import "highcharts/js/es-modules/parts/ScatterSeries";
-import "highcharts/js/es-modules/parts/PlotLineOrBand";
-import "highcharts/js/es-modules/parts/Interaction";
-import "highcharts/css/highcharts.scss";*/
 
 import { observable, computed } from "mobx";
 import { observer } from "mobx-react";
