@@ -1,6 +1,6 @@
 import { TorrentDataProvider, series_key } from "./load";
 import { imdbproto } from "../lib/ratings";
-import "babel-polyfill";
+import "@babel/polyfill";
 import { render } from "react-dom";
 import * as React from "react";
 import Gui from "./Gui";

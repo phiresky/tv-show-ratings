@@ -14,7 +14,7 @@ cd parse-data-rs
 ./getdata.sh
 cargo run --release
 cd ..
-yarn run ts-node --transpileOnly src/seed
+yarn run ts-node --transpile-only src/seed
 ```
 
 To run the project first run `yarn run proto-gen` then run `yarn run dev`.
