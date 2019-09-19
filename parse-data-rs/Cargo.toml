@@ -2,22 +2,21 @@
 authors = ["phiresky <phireskyde+git@gmail.com>"]
 name = "parse-data-rs"
 version = "0.1.0"
+edition = "2018"
 
 [dependencies]
-csv = "1.0.7"
-serde_derive = "1.0.91"
-serde = "1.0.91"
-prost = "0.5.0"
-prost-derive = "0.5.0"
-bytes = "0.4.12"
-serde_json = "1.0.39"
-indicatif = "0.11.0"
-itertools = "0.8.0"
-sha2 = "0.8.0"
-rayon = "1.0.3"
+csv = "*"
+serde = { version = "*", features = ["derive"] }
+prost = "*"
+bytes = "*"
+serde_json = "*"
+indicatif = "*"
+itertools = "*"
+sha2 = "*"
+rayon = "*"
 
 [build-dependencies]
-prost-build = "0.5.0"
+prost-build = "*"
 
 [profile.release]
 opt-level = 3

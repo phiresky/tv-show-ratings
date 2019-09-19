@@ -6,6 +6,18 @@
 
 This project plots the episode ratings of TV shows and their trends.
 
+## Prerequisites
+
+You will need a ![recent Rust version](https://www.rust-lang.org/learn/get-started) and [yarn](https://yarnpkg.com).
+
+```sh
+$ rustc --version
+1.37.0.
+rustc 1.37.0 (eae3437df 2019-08-13)
+```
+
+## Local Setup
+
 To parse / convert the data:
 
 ```sh

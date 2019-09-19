@@ -1,18 +1,4 @@
-#![feature(nll)]
-
-extern crate csv;
-extern crate prost;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate prost_derive;
-use std::time::{Duration, Instant};
-extern crate bytes;
-extern crate indicatif;
-extern crate itertools;
-extern crate sha2;
+use std::time::{Instant};
 use bytes::BytesMut;
 use itertools::Itertools;
 use prost::Message;
@@ -22,11 +8,9 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-extern crate rayon;
-use rayon::prelude::*;
 
 mod tsvs;
-use tsvs::*;
+use crate::tsvs::*;
 const DIRNAME: &str = "data-in";
 
 mod ratings {
@@ -43,7 +27,7 @@ fn load(fname: &str) -> Result<csv::Reader<std::fs::File>, csv::Error> {
         .from_path(Path::new(DIRNAME).join(fname))
 }
 
-fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
+fn load_series() -> Result<Vec<ratings::db::Series>, Box<dyn Error>> {
     let mut series_map: HashMap<String, ratings::db::Series> = HashMap::new();
     let mut episodes_map: HashMap<String, ratings::db::series::Episode> = HashMap::new();
     let mut basics = load("title.basics.tsv")?;
@@ -57,7 +41,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
     while basics.read_byte_record(&mut raw_record)? {
         let data: title_basics<&[u8]> = raw_record.deserialize(Some(&headers))?;
         use std::str;
-        match data.titleType.as_ref() {
+        match data.titleType.as_ref() as &[u8] {
             b"tvSeries" | b"tvMiniSeries" => {
                 let ser = ratings::db::Series {
                     title: str::from_utf8(data.primaryTitle)?.to_owned(),
@@ -138,7 +122,7 @@ fn load_series() -> Result<Vec<ratings::db::Series>, Box<Error>> {
 fn write_with_config(
     series: impl Iterator<Item = ratings::db::Series>,
     out_path: &str,
-) -> Result<(), Box<Error>> {
+) -> Result<(), Box<dyn Error>> {
     let db = ratings::Db {
         series: series.map(|s| s.clone()).collect(),
     };
@@ -171,7 +155,7 @@ fn hashn(s: &ratings::db::Series) -> u8 {
     let res = Sha256::digest(series_key(s).as_bytes());
     res[0]
 }
-fn my_main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut all_series: Vec<_> = load_series()?
         .into_iter()
         .filter(|s| s.episodes.len() > MIN_EPISODES && s.votes > MIN_VOTES)
@@ -198,8 +182,4 @@ fn my_main() -> Result<(), Box<Error>> {
         )?;
     }
     Ok(())
-}
-
-fn main() {
-    my_main().unwrap();
 }
