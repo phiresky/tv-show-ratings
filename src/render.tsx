@@ -129,7 +129,8 @@ export function chartOptions(series: ISeries[]) {
 	const plotBands = maxSeasons.map((season, i) => ({
 		from: seasonXOffset[i] + season.min,
 		to: seasonXOffset[i] + season.max,
-		label: { text: `Season ${i}` }
+		label: { text: `Season ${i}` },
+		color: "rgba(0,0,0,0)"
 	}));
 	const plotLines = [] as any[];
 	for (let i = 0; i < maxSeasons.length; i++) {

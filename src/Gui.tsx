@@ -7,7 +7,7 @@ import { observable, computed } from "mobx";
 import { observer } from "mobx-react";
 import { chartOptions } from "./render";
 import { fromPromise, lazyObservable } from "mobx-utils";
-import AsyncSelect from "react-select/lib/Async";
+import AsyncSelect from "react-select/async";
 import TrieSearch from "trie-search";
 import { imdbproto } from "../lib/ratings";
 
