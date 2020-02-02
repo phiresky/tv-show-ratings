@@ -9,8 +9,7 @@
 	"dependencies": {
 		"@babel/polyfill": "^7.6.0",
 		"@types/es6-promisify": "^6.0.0",
-		"@types/highcharts": "^5.0.44",
-		"@types/mz": "^0.0.32",
+		"@types/mz": "^2.7.0",
 		"@types/protobufjs": "^6.0.0",
 		"@types/react": "^16.9.2",
 		"@types/react-dom": "^16.9.0",
@@ -18,7 +17,7 @@
 		"@types/webtorrent": "^0.107.0",
 		"core-decorators": "^0.20.0",
 		"es6-promisify": "^6.0.2",
-		"highcharts": "^7.2.0",
+		"highcharts": "^8.0.0",
 		"highcharts-react-official": "^2.2.2",
 		"indexeddb-chunk-store": "^2.2.1",
 		"js-sha256": "^0.9.0",
