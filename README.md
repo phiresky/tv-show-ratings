@@ -1,5 +1,7 @@
 # tv-show-ratings
 
+**2023 Update: The code still works but since hosting this is kinda annoying especially without infringing on the copyright of IMDb, the hosted version is either out of date or down. Maybe use [ratingraph.com](https://www.ratingraph.com/tv-shows) as a replacement.**
+
 ![screenshot](screenshot.png)
 
 [Hosted Version](https://phiresky.github.io/tv-show-ratings/)
